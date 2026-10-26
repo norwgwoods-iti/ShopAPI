@@ -17,5 +17,5 @@ class CartModel(Base):
     product_id: Mapped[int] = mapped_column(ForeignKey('products.id', ondelete="CASCADE"), unique=True)
     quantity: Mapped[int] = mapped_column(nullable=False)
 
-    user: Mapped["UserModel"] = relationship(back_populates='cart_items')
-    product: Mapped["ProductModel"] = relationship(back_populates='cart_items')
+    user: Mapped["UserModel"] = relationship(back_populates='cart_items') ###
+    product: Mapped["ProductModel"] = relationship(back_populates='cart_items') ###

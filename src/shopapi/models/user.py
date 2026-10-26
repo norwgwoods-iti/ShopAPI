@@ -1,7 +1,8 @@
+from sqlalchemy import DateTime
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from src.shopapi.db.base import Base
 from sqlalchemy.sql.sqltypes import Date
-from datetime import date
+from datetime import date, datetime
 
 
 class UserModel(Base):
@@ -11,7 +12,8 @@ class UserModel(Base):
     email: Mapped[str] = mapped_column(nullable=False, unique=True)
     password_hash: Mapped[str] = mapped_column(nullable=False)
     role: Mapped[str] = mapped_column(nullable=False, default='user') # enum
-    created_at: Mapped[date] = mapped_column(Date, nullable=False, default=date.today)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=date.today)
 
-    cart_items: Mapped[list["CartModel"]] = relationship(back_populates="users", cascade="all, delete-orphan")
-    orders: Mapped[list["ProductModel"]] = relationship(back_populates="users", cascade="all, delete-orphan")
+    cart_items: Mapped[list["CartModel"]] = relationship(back_populates="user", cascade="all, delete-orphan") ###
+
+    orders: Mapped[list["OrderModel"]] = relationship(back_populates="user", cascade="all, delete-orphan") ###

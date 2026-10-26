@@ -20,6 +20,6 @@ class OrderItemModel(Base):
     quantity: Mapped[int] = mapped_column(nullable=False) # > 0
     unit_price: Mapped[Decimal] = mapped_column(Numeric(10, 2), nullable=False) # numeric > 0
 
-    order: Mapped["OrderModel"] = relationship(back_populates="order_item")
-    product: Mapped["ProductModel"] = relationship(back_populates="order_item")
+    order: Mapped["OrderModel"] = relationship(back_populates="order_items") ###
+    product: Mapped["ProductModel"] = relationship(back_populates="order_items") ###
 
