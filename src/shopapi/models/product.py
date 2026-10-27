@@ -50,10 +50,9 @@ class ProductModel(Base):
         back_populates="product",
         cascade="all, delete-orphan"
     ) ###
-    order_items: Mapped[list["OrderItemModel"]] = relationship(
-        back_populates="product",
-        cascade="all, delete-orphan"
-    ) ###
+    # order_items: Mapped[list["OrderItemModel"]] = relationship(
+    #     back_populates="product",
+    # ) ###
 
 
 

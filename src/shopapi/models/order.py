@@ -6,7 +6,7 @@ from sqlalchemy.sql.sqltypes import Date
 
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from src.shopapi.db.base import Base
+from shopapi.db.base import Base
 
 
 class OrderModel(Base):

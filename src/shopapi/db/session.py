@@ -1,7 +1,8 @@
 import os
+from typing import Annotated
 
 from dotenv import load_dotenv
-from fastapi import HTTPException
+from fastapi import HTTPException, Depends
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 
@@ -22,19 +23,7 @@ async def get_session():
     async with new_session() as session:
         yield session
 
-
-
-async def create_table():
-    try:
-        async with engine.begin() as conn:
-            await conn.run_sync(Base.metadata.create_all)
-    except SQLAlchemyError as exc:
-        raise HTTPException(
-            status_code = 500,
-            detail="Create table failed.",
-        )
-    return {"status": "ok"}
-
+SessionDep = Annotated[AsyncSession, Depends(get_session)]
 #
 # from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 # from shopapi.core.config import settings

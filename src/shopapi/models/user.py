@@ -1,6 +1,6 @@
 from sqlalchemy import DateTime
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from src.shopapi.db.base import Base
+from shopapi.db.base import Base
 from sqlalchemy.sql.sqltypes import Date
 from datetime import date, datetime
 
@@ -16,4 +16,4 @@ class UserModel(Base):
 
     cart_items: Mapped[list["CartModel"]] = relationship(back_populates="user", cascade="all, delete-orphan") ###
 
-    orders: Mapped[list["OrderModel"]] = relationship(back_populates="user", cascade="all, delete-orphan") ###
+    # orders: Mapped[list["OrderModel"]] = relationship(back_populates="user", cascade="all, delete-orphan") ###
