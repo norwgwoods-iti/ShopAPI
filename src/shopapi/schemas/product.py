@@ -38,3 +38,5 @@ class ProductListResponseSchema(BaseModel):
     page: int
     page_size: int
     items: list[ProductResponseSchema]
+
+    model_config = ConfigDict(from_attributes=True)

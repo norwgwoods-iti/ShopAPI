@@ -1,21 +1,20 @@
 from typing import Literal
 
 from fastapi import APIRouter, Query
-from sqlalchemy import select
+from sqlalchemy import select, func
 from starlette import status
 from starlette.responses import Response
 
 from shopapi.db.session import SessionDep
-from shopapi.models import ProductModel
 from shopapi.models.category import CategoryModel
-from shopapi.schemas.category import CategoryResponseSchema
+from shopapi.schemas.category import CategoryResponseSchema, ProductListResponseSchema
 
 router = APIRouter(
     prefix="/categories",
     tags=["Categories"]
 )
 
-@router.get("/", response_model=CategoryResponseSchema)
+@router.get("/", response_model=ProductListResponseSchema)
 async def get_categories(
         session: SessionDep,
         page: int = Query(default=1, ge=1),
@@ -28,7 +27,7 @@ async def get_categories(
 
     query = (
         select(CategoryModel)
-        .where(CategoryModel.id.is_(not None))
+        # .where(CategoryModel.id.is_(not None))
     )
 
     if search is not None:
@@ -42,19 +41,29 @@ async def get_categories(
     }[sort_by]
 
     if order == "asc":
-        query = query.order_by(sort_column.asc(), ProductModel.id.asc())
+        query = query.order_by(sort_column.asc(), CategoryModel.id.asc())
     else:
-        query = query.order_by(sort_column.desc(), ProductModel.id.desc())
+        query = query.order_by(sort_column.desc(), CategoryModel.id.desc())
 
+    count_query = select(func.count()).select_from(
+        query.order_by(None).subquery()
+    )
+    total = await session.scalar(count_query)
 
     offset = (page - 1) * page_size
     query = query.offset(offset).limit(page_size)
 
     result = await session.scalars(query)
+    items = result.all()
 
-    # categories = await session.scalars(select(CategoryModel).order_by(CategoryModel.id))
 
-    return result.all()
+
+    return ProductListResponseSchema(
+        total=total or 0,
+        page=page,
+        page_size=page_size,
+        items=items,
+    )
 
 
 
