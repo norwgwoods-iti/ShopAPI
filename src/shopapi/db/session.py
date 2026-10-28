@@ -1,10 +1,8 @@
 from typing import Annotated
-from fastapi import HTTPException, Depends
-from sqlalchemy.exc import SQLAlchemyError
+from fastapi import Depends
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 
 from shopapi.core.config import settings
-from shopapi.db.base import Base
 
 engine = create_async_engine(settings.database_url, echo=True)
 
@@ -15,7 +13,8 @@ async def get_session():
         yield session
 
 SessionDep = Annotated[AsyncSession, Depends(get_session)]
-#
+
+
 # from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 # from shopapi.core.config import settings
 #
