@@ -13,16 +13,3 @@ class UserSchema(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-class UserCreateSchema(BaseModel):
-    email: str
-    password: str
-
-    model_config = ConfigDict(from_attributes=True)
-
-
-class UserResponseSchema(BaseModel):
-    id: int
-    email: str
-    role: str
-
-    model_config = ConfigDict(from_attributes=True)
