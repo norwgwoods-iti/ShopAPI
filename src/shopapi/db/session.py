@@ -1,21 +1,12 @@
-import os
 from typing import Annotated
-
-from dotenv import load_dotenv
 from fastapi import HTTPException, Depends
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 
+from shopapi.core.config import settings
 from shopapi.db.base import Base
 
-load_dotenv()
-
-DATABASE_URL = os.getenv("DATABASE_URL")
-if not DATABASE_URL:
-    raise RuntimeError("DATABASE_URL is not set")
-
-
-engine = create_async_engine(DATABASE_URL, echo=True)
+engine = create_async_engine(settings.database_url, echo=True)
 
 new_session = async_sessionmaker(engine, expire_on_commit=False)
 

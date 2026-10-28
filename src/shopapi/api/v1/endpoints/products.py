@@ -35,7 +35,7 @@ async def get_product(
 @router.get("/", response_model=ProductListResponseSchema)
 async def get_products(
         session: SessionDep,
-        page: int =  Query(default=1, ge=1),
+        page: int = Query(default=1, ge=1),
         page_size: int = Query(default=20, ge=1, le=100),
         category_id: int | None = Query(default=None, ge=1),
         min_price: Decimal | None = Query(default=None, ge=0),

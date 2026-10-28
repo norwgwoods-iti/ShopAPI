@@ -1,4 +1,4 @@
-from sqlalchemy import DateTime
+from sqlalchemy import DateTime, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from shopapi.db.base import Base
 from sqlalchemy.sql.sqltypes import Date
@@ -12,7 +12,7 @@ class UserModel(Base):
     email: Mapped[str] = mapped_column(nullable=False, unique=True)
     password_hash: Mapped[str] = mapped_column(nullable=False)
     role: Mapped[str] = mapped_column(nullable=False, default='user') # enum
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=date.today)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=func.now())
 
     cart_items: Mapped[list["CartModel"]] = relationship(back_populates="user", cascade="all, delete-orphan") ###
 
