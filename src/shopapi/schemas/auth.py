@@ -1,7 +1,8 @@
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, EmailStr
+
 
 class AuthRequestSchema(BaseModel):
-    email: str
+    email: EmailStr
     password: str
 
     model_config = ConfigDict(from_attributes=True)
@@ -9,14 +10,14 @@ class AuthRequestSchema(BaseModel):
 
 class AuthResponseSchema(BaseModel):
     id: int
-    email: str
+    email: EmailStr
     role: str
 
     model_config = ConfigDict(from_attributes=True)
 
 
 class TokenRequestSchema(BaseModel):
-    email: str
+    email: EmailStr
     password: str
 
     model_config = ConfigDict(from_attributes=True)

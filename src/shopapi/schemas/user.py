@@ -1,11 +1,10 @@
 from datetime import datetime
-
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, EmailStr
 
 
 class UserSchema(BaseModel):
     id: int
-    email: str
+    email: EmailStr
     password_hash: str
     role: str
     created_at: datetime
