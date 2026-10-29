@@ -33,3 +33,15 @@ async def test_get_product_incorrect_id(client, product):
 
     assert response.status_code == 404
     assert response.text == f"Product with id {product_id} not found"
+
+
+@pytest.mark.negative
+async def test_get_product_invalid_id(client, product):
+
+    product_id = 'invalid-id'
+
+    response = await client.get(
+        url=f"{base_path}/{product_id}",
+    )
+
+    assert response.status_code == 422
