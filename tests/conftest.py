@@ -1,5 +1,7 @@
 # import os
 # from dotenv import load_dotenv
+from decimal import Decimal
+
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
@@ -8,6 +10,7 @@ from shopapi.core.config import settings
 from shopapi.db.base import Base
 from shopapi.db.session import get_session
 from shopapi.main import app
+from shopapi.models import CategoryModel, ProductModel
 
 test_engine =  create_async_engine(settings.test_database_url)
 
@@ -61,3 +64,25 @@ async def dispose_test_engine():
     await test_engine.dispose()
 
 
+@pytest_asyncio.fixture()
+async def product(db_session):
+    category = CategoryModel(
+        name="Test category",
+        slug="test-category",
+    )
+    db_session.add(category)
+    await db_session.flush()
+
+    product = ProductModel(
+        category_id=category.id,
+        name="Test product",
+        description="Product for testing",
+        price=Decimal("100.00"),
+        stock=10,
+        is_active=True,
+    )
+    db_session.add(product)
+    await db_session.commit()
+    await db_session.refresh(product)
+
+    return product
