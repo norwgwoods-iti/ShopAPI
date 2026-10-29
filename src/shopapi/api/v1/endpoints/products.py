@@ -1,22 +1,27 @@
 from decimal import Decimal
-from http.client import HTTPException
+from fastapi import HTTPException
 from typing import Literal
 
 from fastapi import APIRouter, Query
 from sqlalchemy import select, func
+from sqlalchemy.exc import IntegrityError
 from starlette import status
 from starlette.responses import Response
 
 from shopapi.db.session import get_session, SessionDep
 from shopapi.models.product import ProductModel
-from shopapi.schemas.product import ProductResponseSchema, ProductListResponseSchema
+from shopapi.schemas.product import ProductResponseSchema, ProductListResponseSchema, ProductResponseCreateSchema, \
+    ProductCreateSchema
 
 router = APIRouter(
     prefix="/products",
     tags=["Products"],
 )
 
-@router.get("/{product_id}", response_model=ProductResponseSchema)
+@router.get(
+    path="/{product_id}",
+    response_model=ProductResponseSchema
+)
 async def get_product(
         product_id: int,
         session: SessionDep
@@ -32,7 +37,10 @@ async def get_product(
     return product
 
 
-@router.get("/", response_model=ProductListResponseSchema)
+@router.get(
+    path="/",
+    response_model=ProductListResponseSchema
+)
 async def get_products(
         session: SessionDep,
         page: int = Query(default=1, ge=1),
@@ -108,63 +116,27 @@ async def get_products(
     )
 
 
+@router.post(
+    path="/",
+    response_model=ProductResponseCreateSchema,
+    status_code=status.HTTP_201_CREATED,
+)
+async def create_product(
+        product: ProductCreateSchema,
+        session: SessionDep,
+):
+    new_product = ProductModel(**product.model_dump())
 
+    session.add(new_product)
 
+    try:
+        await session.commit()
+    except IntegrityError as e:
+        await session.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Product violates integrity constraints",
+        ) from e
 
-
-
-
-
-
-
-
-# @router.post("/")
-# async def create_product(session: SessionDep, product: ProductAddSchema) -> ProductAddSchema:
-#     new_product = ProductModel(
-#         category_id = product.category_id,
-#         name=product.name,
-#         description=product.description,
-#         price=product.price,
-#         stock=product.stock,
-#     )
-#     # new_product = ProductModel(
-#     #     id=product.id,
-#     #     category_id = product.category_id,
-#     #     name=product.name,
-#     #     description=product.description,
-#     #     price=product.price,
-#     #     stock=product.stock,
-#     #     is_active=product.is_active,
-#     #     created_at=product.created_at,
-#     # )
-#     session.add(new_product)
-#
-#     try:
-#         await session.commit()
-#     except IntegrityError:
-#         await session.rollback()
-#         raise HTTPException(
-#             status_code=409,
-#             detail=f"Product {product.name} already exists",
-#         )
-#
-#     return {
-#         "category_id": new_product.category_id,
-#         "name": new_product.name,
-#         "description": new_product.description,
-#         "price": new_product.price,
-#         "stock": new_product.stock,
-#     }
-
-
-
-# ____________________________________________________________________________________________________________
-    # return {
-    #     "id": new_product.id,
-    #     "category_id": new_product.category_id,
-    #     "name": new_product.name,
-    #     "description": new_product.description,
-    #     "price": new_product.price,
-    #     "stock": new_product.stock,
-    #     "created_at": new_product.created_at,
-    # }
+    await session.refresh(new_product)
+    return new_product
