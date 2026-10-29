@@ -3,25 +3,18 @@ import pytest
 base_path = "api/v1/auth"
 
 async def user_register_success(client):
+
     response = await client.post(
         f"{base_path}/register",
         json={
             "email": "test@example.ru",
-            "password": "TestPassword123",
+            "password": "!TestPassword123",
         }
     )
 
     assert response.status_code == 201
 
-    return response
-
-
-@pytest.mark.asyncio
-async def test_register_user_success(client):
-
-    response_create_user = await user_register_success(client)
-
-    data = response_create_user.json()
+    data = response.json()
 
     assert data["email"] == "test@example.ru"
     assert "role" in data
@@ -29,12 +22,20 @@ async def test_register_user_success(client):
     assert "password_hash" not in data
     assert "created_at" not in data
 
+    return response
+
+
+@pytest.mark.asyncio
+async def test_register_user_success(client):
+
+    await user_register_success(client)
+
 
 @pytest.mark.asyncio
 async def test_register_duplicate_email(client):
     payload = {
         "email": "test@example.ru",
-        "password": "TestPassword123",
+        "password": "!TestPassword123",
     }
 
     first_response = await client.post(
@@ -59,7 +60,7 @@ async def test_register_invalid_email(client):
         f"{base_path}/register",
         json={
             "email": "not-email",
-            "password": "TestPassword123",
+            "password": "!TestPassword123",
         },
     )
 
@@ -73,17 +74,11 @@ async def test_authenticate_user_success(client):
 
     data_register = response_create_user.json()
 
-    assert data_register["email"] == "test@example.ru"
-    assert "role" in data_register
-    assert "id" in data_register
-    assert "password_hash" not in data_register
-    assert "created_at" not in data_register
-
     response_login = await client.post(
         f"{base_path}/login",
         data={
             "username": data_register["email"],
-            "password": "TestPassword123",
+            "password": "!TestPassword123",
         }
     )
 
@@ -102,18 +97,54 @@ async def test_authenticate_user_invalid_password(client):
 
     data_register = response_create_user.json()
 
-    assert data_register["email"] == "test@example.ru"
-    assert "role" in data_register
-    assert "id" in data_register
-    assert "password_hash" not in data_register
-    assert "created_at" not in data_register
-
     response_login = await client.post(
         f"{base_path}/login",
         data={
             "username": data_register["email"],
-            "password": "123TestPassword",
+            "password": "123TestPassword!",
         }
     )
 
     assert response_login.status_code == 401
+
+@pytest.mark.negative
+async def test_register_user_empty_password(client):
+
+    response = await client.post(
+        f"{base_path}/register",
+        json={
+            "email": "test@example.ru",
+            "password": "",
+        }
+    )
+
+    assert response.status_code == 400
+
+
+@pytest.mark.negative
+async def test_register_user_non_special_symbol_password(client):
+
+    response = await client.post(
+        f"{base_path}/register",
+        json={
+            "email": "test@example.ru",
+            "password": "TestPassword123",
+        }
+    )
+
+    assert response.status_code == 400
+
+
+@pytest.mark.negative
+async def test_register_user_non_capital_letter_password(client):
+
+    response = await client.post(
+        f"{base_path}/register",
+        json={
+            "email": "test@example.ru",
+            "password": "!testpassword123",
+        }
+    )
+
+    assert response.status_code == 400
+    
