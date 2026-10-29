@@ -1,14 +1,14 @@
-class UserModel(Base):
-    __tablename__ = 'users'
+from datetime import datetime
+from pydantic import BaseModel, ConfigDict, EmailStr
 
-    id: Mapped[int] = mapped_column(primary_key=True)
-    email: Mapped[str] = mapped_column(nullable=False, unique=True)
-    password_hash: Mapped[str] = mapped_column(nullable=False)
-    role: Mapped[str] = mapped_column(nullable=False, default='user') # enum
-    created_at: Mapped[date] = mapped_column(Date, nullable=False, default=date.today)
 
-    cart_items: Mapped[list["CartModel"]] = relationship(back_populates="users", cascade="all, delete-orphan")
-    orders: Mapped[list["ProductModel"]] = relationship(back_populates="users", cascade="all, delete-orphan")
+class UserSchema(BaseModel):
+    id: int
+    email: EmailStr
+    password_hash: str
+    role: str
+    created_at: datetime
 
+    model_config = ConfigDict(from_attributes=True)
 
 
