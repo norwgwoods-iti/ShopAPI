@@ -1,13 +1,16 @@
-from typing import Literal
+from typing import Literal, Annotated
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Query, Depends, HTTPException
 from sqlalchemy import select, func
+from sqlalchemy.exc import IntegrityError
 from starlette import status
 from starlette.responses import Response
 
+from shopapi.api.v1.endpoints.auth import get_current_user
 from shopapi.db.session import SessionDep
+from shopapi.models import UserModel
 from shopapi.models.category import CategoryModel
-from shopapi.schemas.category import CategoryResponseSchema, ProductListResponseSchema
+from shopapi.schemas.category import CategoryResponseSchema, ProductListResponseSchema, CategoryRequestSchema
 
 router = APIRouter(
     prefix="/categories",
@@ -85,29 +88,42 @@ async def get_category(
 
 
 
+@router.post(
+    path="/",
+    response_model=CategoryResponseSchema,
+    status_code=status.HTTP_201_CREATED,
+)
+async def create_category(
+        session: SessionDep,
+        form_data: CategoryRequestSchema,
+        current_user: Annotated[UserModel, Depends(get_current_user)]
+):
+    query = select(CategoryModel).where(CategoryModel.name == form_data.name)
+    result = await session.execute(query)
+    category = result.scalars().first()
 
+    if category:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"Category {category.name} already exists"
+        )
+    else:
+        new_category = CategoryModel(
+            name=form_data.name,
+            slug=form_data.slug
+        )
+        session.add(new_category)
 
-
-
-# @router.post("/")
-# async def create_categories(session: SessionDep, category: CategoryResponseSchema):
-#     new_category = CategoryModel(
-#         id=category.id,
-#         name=category.name,
-#         slug=category.slug,
-#     )
-#     session.add(new_category)
-#
-#     try:
-#         await session.commit()
-#     except IntegrityError:
-#         session.rollback()
-#         raise HTTPException(
-#             status_code=409,
-#             detail=f"Category {category.name} already exists"
-#         )
-#     return {
-#         "id": new_category.id,
-#         "name": new_category.name,
-#         "slug": new_category.slug,
-#     }
+        try:
+            await session.commit()
+        except IntegrityError:
+            await session.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=f"Category {new_category.name} already exists"
+            )
+        return {
+            "id": new_category.id,
+            "name": new_category.name,
+            "slug": new_category.slug,
+        }
