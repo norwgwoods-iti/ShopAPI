@@ -40,3 +40,17 @@ class ProductListResponseSchema(BaseModel):
     items: list[ProductResponseSchema]
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class ProductCreateSchema(BaseModel):
+    name: str
+    description: str | None = Field(default="Описание(необязательное поле)")
+    category_id: int
+    price: Decimal
+    stock: int
+
+class ProductResponseCreateSchema(ProductCreateSchema):
+    id: int
+    is_active: bool = True
+
+    model_config = ConfigDict(from_attributes=True)
