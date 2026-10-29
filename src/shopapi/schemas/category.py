@@ -16,7 +16,7 @@ class ProductListResponseSchema(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
-class CategoryRequestSchema(BaseModel):
+class CategoryCreateSchema(BaseModel):
     name: str
     slug: str
 

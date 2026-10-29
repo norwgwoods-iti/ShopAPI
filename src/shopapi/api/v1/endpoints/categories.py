@@ -10,7 +10,7 @@ from shopapi.api.v1.endpoints.auth import get_current_user
 from shopapi.db.session import SessionDep
 from shopapi.models import UserModel
 from shopapi.models.category import CategoryModel
-from shopapi.schemas.category import CategoryResponseSchema, ProductListResponseSchema, CategoryRequestSchema
+from shopapi.schemas.category import CategoryResponseSchema, ProductListResponseSchema, CategoryCreateSchema
 
 router = APIRouter(
     prefix="/categories",
@@ -24,7 +24,7 @@ async def get_categories(
         page_size: int = Query(default=20, ge=1, le=100),
         search: str | None = Query(default=None, min_length=1, max_length=100),
         sort_by: Literal["name", "slug"] = "name",
-        order: Literal["asc", "desc"] = "desc",
+        order: Literal["asc", "desc"] = "asc",
 
 ):
 
@@ -95,7 +95,7 @@ async def get_category(
 )
 async def create_category(
         session: SessionDep,
-        form_data: CategoryRequestSchema,
+        form_data: CategoryCreateSchema,
         current_user: Annotated[UserModel, Depends(get_current_user)]
 ):
     query = select(CategoryModel).where(CategoryModel.name == form_data.name)
@@ -108,10 +108,8 @@ async def create_category(
             detail=f"Category {category.name} already exists"
         )
     else:
-        new_category = CategoryModel(
-            name=form_data.name,
-            slug=form_data.slug
-        )
+        new_category = CategoryModel(**form_data.model_dump())
+
         session.add(new_category)
 
         try:
@@ -122,8 +120,7 @@ async def create_category(
                 status_code=status.HTTP_409_CONFLICT,
                 detail=f"Category {new_category.name} already exists"
             )
-        return {
-            "id": new_category.id,
-            "name": new_category.name,
-            "slug": new_category.slug,
-        }
+
+        await session.refresh(new_category)
+
+        return new_category
