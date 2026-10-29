@@ -34,5 +34,10 @@ dev = [
 pythonpath = ["src"]
 testpaths = ["tests"]
 asyncio_mode = "auto"
+markers= [
+    "negative: negative test"
+]
+
+
 #[project.scripts]
 #shopapi = "src/shopapi/:main"
