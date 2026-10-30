@@ -1,7 +1,3 @@
-# import os
-# from dotenv import load_dotenv
-import asyncio
-import sys
 from decimal import Decimal
 
 import pytest_asyncio
@@ -14,8 +10,18 @@ from shopapi.db.session import get_session
 from shopapi.main import app
 from shopapi.models import CategoryModel, ProductModel
 
-if sys.platform == "win32":
-    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+import asyncio
+import sys
+from collections.abc import Callable, Mapping
+import pytest
+
+""" SelectorEventLoop для Windows """
+def pytest_asyncio_loop_factories(
+    config: pytest.Config, item: pytest.Item
+) -> Mapping[str, Callable[[], asyncio.AbstractEventLoop]]:
+    if sys.platform == "win32":
+        return {"selector": asyncio.SelectorEventLoop}
+    return {}
 
 test_engine =  create_async_engine(settings.test_database_url)
 
