@@ -97,3 +97,40 @@ async def product(db_session):
     await db_session.refresh(product)
 
     return product
+
+
+@pytest_asyncio.fixture()
+async def products(db_session):
+
+    categories = [
+        CategoryModel(
+            name=f"Test category {i}",
+            slug=f"test-category {i}",
+        ) for i in range(1,4)
+    ]
+
+    db_session.add_all(categories)
+    await db_session.flush()
+
+    specs = [
+        (categories[0], 'Test product 1', '1000.00'), # id = 1 | category_id = 1
+        (categories[1], 'Test product 2', '2000.00'), # id = 2 | category_id = 2
+        (categories[1], 'Test product 3', '3000.00'), # id = 3 | category_id = 2
+        (categories[2], 'Test product 4', '1100.00'), # id = 4 | category_id = 1
+    ]
+
+    products = [
+        ProductModel(
+            category_id=category.id,
+            name=name,
+            description="Product for testing",
+            price=Decimal(price),
+            stock=10,
+            is_active=True,
+        ) for category, name, price in specs
+    ]
+
+    db_session.add_all(products)
+    await db_session.commit()
+
+    return products
