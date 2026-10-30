@@ -25,7 +25,7 @@ async def test_get_product_success(client, product):
 @pytest.mark.negative
 async def test_get_product_incorrect_id(client, product):
 
-    product_id = 2
+    product_id = 9999999
 
     response = await client.get(
         url=f"{base_path}/{product_id}",
