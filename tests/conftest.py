@@ -23,6 +23,8 @@ def pytest_asyncio_loop_factories(
         return {"selector": asyncio.SelectorEventLoop}
     return {}
 
+
+
 test_engine =  create_async_engine(settings.test_database_url)
 
 TestSession = async_sessionmaker(
