@@ -21,7 +21,7 @@ def pytest_asyncio_loop_factories(
 ) -> Mapping[str, Callable[[], asyncio.AbstractEventLoop]]:
     if sys.platform == "win32":
         return {"selector": asyncio.SelectorEventLoop}
-    return {}
+    return {"default": asyncio.new_event_loop}
 
 test_engine =  create_async_engine(settings.test_database_url)
 
