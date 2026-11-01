@@ -29,9 +29,12 @@ async def get_product(
     product = await session.get(ProductModel, product_id)
 
     if not product:
-        return Response(
+        raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            content=f"Product with id {product_id} not found"
+            detail={
+                "message": f"Product with id {product_id} not found",
+                "product_id": product_id,
+            }
         )
 
     return product
