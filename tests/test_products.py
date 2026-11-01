@@ -1,4 +1,10 @@
+from datetime import datetime
+from decimal import Decimal
+
 import pytest
+from pydantic import ConfigDict
+
+from shopapi.schemas.product import ProductResponseSchema
 
 base_path = "/api/v1/products"
 
@@ -24,7 +30,7 @@ async def get_products_success(client, products):
     return response
 
 
-
+@pytest.mark.products
 @pytest.mark.asyncio
 async def test_get_product_success(client, product):
     response = await client.get(
@@ -50,13 +56,13 @@ async def test_get_product_success(client, product):
     assert product_created["is_active"] is True
     assert "created_at" in product_created
 
-
+@pytest.mark.products
 @pytest.mark.asyncio
 async def test_get_products_success(client, products):
 
     await get_products_success(client, products)
 
-
+@pytest.mark.products
 @pytest.mark.asyncio
 async def test_get_products_filter_empty_page(client, product):
 
@@ -75,7 +81,7 @@ async def test_get_products_filter_empty_page(client, product):
     assert result["page_size"] == 20
     assert result["items"] == []
 
-
+@pytest.mark.products
 @pytest.mark.asyncio
 async def test_get_products_filter_page_size(client, products):
     response = await client.get(
@@ -94,7 +100,7 @@ async def test_get_products_filter_page_size(client, products):
     assert len(result["items"]) == 2
 
 
-
+@pytest.mark.products
 @pytest.mark.asyncio
 async def test_get_products_filter_category_id(client, products):
     response = await client.get(
@@ -112,7 +118,7 @@ async def test_get_products_filter_category_id(client, products):
     assert result["page_size"] == 20
     assert len(result["items"]) == result["total"]
 
-
+@pytest.mark.products
 @pytest.mark.asyncio
 async def test_get_products_filter_min_price(client, products):
     response = await client.get(
@@ -130,7 +136,7 @@ async def test_get_products_filter_min_price(client, products):
     assert result["page_size"] == 20
     assert len(result["items"]) == result["total"]
 
-
+@pytest.mark.products
 @pytest.mark.asyncio
 async def test_get_products_filter_max_price(client, products):
     response = await client.get(
@@ -148,7 +154,7 @@ async def test_get_products_filter_max_price(client, products):
     assert result["page_size"] == 20
     assert len(result["items"]) == result["total"]
 
-
+@pytest.mark.products
 @pytest.mark.asyncio
 async def test_get_products_filter_min_max_price(client, products):
     response = await client.get(
@@ -167,7 +173,7 @@ async def test_get_products_filter_min_max_price(client, products):
     assert result["page_size"] == 20
     assert len(result["items"]) == result["total"]
 
-
+@pytest.mark.products
 @pytest.mark.asyncio
 async def test_get_products_filter_search(client, products):
     response = await client.get(
@@ -185,7 +191,7 @@ async def test_get_products_filter_search(client, products):
     assert result["page_size"] == 20
     assert len(result["items"]) == result["total"]
 
-
+@pytest.mark.products
 @pytest.mark.asyncio
 async def test_get_products_sort_by_price_asc(client, products):
     response = await client.get(
@@ -215,7 +221,7 @@ async def test_get_products_sort_by_price_asc(client, products):
     assert product["price"] == min_price
 
 
-
+@pytest.mark.products
 @pytest.mark.asyncio
 async def test_get_products_sort_by_price_desc(client, products):
     response = await client.get(
@@ -244,7 +250,7 @@ async def test_get_products_sort_by_price_desc(client, products):
 
     assert product["price"] == max_price
 
-
+@pytest.mark.products
 @pytest.mark.asyncio
 async def test_get_products_sort_by_name_asc(client, products):
     response = await client.get(
@@ -264,7 +270,7 @@ async def test_get_products_sort_by_name_asc(client, products):
     assert product["category_id"] == 1
     assert product["name"] == "Test product 1"
 
-
+@pytest.mark.products
 @pytest.mark.asyncio
 async def test_get_products_sort_by_name_desc(client, products):
     response = await client.get(
@@ -285,7 +291,7 @@ async def test_get_products_sort_by_name_desc(client, products):
     assert product["name"] == "Test product 4"
 
 
-
+@pytest.mark.products
 @pytest.mark.asyncio
 async def test_get_products_sort_by_created_at_asc(client, products):
     response = await client.get(
@@ -307,7 +313,7 @@ async def test_get_products_sort_by_created_at_asc(client, products):
 
 
 
-
+@pytest.mark.products
 @pytest.mark.asyncio
 async def test_get_products_sort_by_created_at_desc(client, products):
     response = await client.get(
@@ -327,7 +333,7 @@ async def test_get_products_sort_by_created_at_desc(client, products):
     assert product["category_id"] == 3
     assert product["name"] == "Test product 4"
 
-
+@pytest.mark.products
 @pytest.mark.negative
 async def test_get_product_filter_page_bellow_border(client):
     response = await client.get(
@@ -339,7 +345,7 @@ async def test_get_product_filter_page_bellow_border(client):
 
     assert response.status_code == 422
 
-
+@pytest.mark.products
 @pytest.mark.negative
 async def test_get_product_filter_invalid_page(client):
     response = await client.get(
@@ -351,7 +357,7 @@ async def test_get_product_filter_invalid_page(client):
 
     assert response.status_code == 422
 
-
+@pytest.mark.products
 @pytest.mark.negative
 async def test_get_product_filter_page_size_bellow_border(client):
     response = await client.get(
@@ -363,7 +369,7 @@ async def test_get_product_filter_page_size_bellow_border(client):
 
     assert response.status_code == 422
 
-
+@pytest.mark.products
 @pytest.mark.asyncio
 async def test_get_product_filter_page_size_on_border(client):
     response = await client.get(
@@ -375,7 +381,7 @@ async def test_get_product_filter_page_size_on_border(client):
 
     assert response.status_code == 200
 
-
+@pytest.mark.products
 @pytest.mark.negative
 async def test_get_product_filter_page_size_above_border(client):
     response = await client.get(
@@ -387,7 +393,7 @@ async def test_get_product_filter_page_size_above_border(client):
 
     assert response.status_code == 422
 
-
+@pytest.mark.products
 @pytest.mark.negative
 async def test_get_product_filter_invalid_page_size(client):
     response = await client.get(
@@ -399,7 +405,7 @@ async def test_get_product_filter_invalid_page_size(client):
 
     assert response.status_code == 422
 
-
+@pytest.mark.products
 @pytest.mark.negative
 async def test_get_product_filter_category_id_bellow_border(client):
     response = await client.get(
@@ -411,7 +417,7 @@ async def test_get_product_filter_category_id_bellow_border(client):
 
     assert response.status_code == 422
 
-
+@pytest.mark.products
 @pytest.mark.negative
 async def test_get_product_filter_invalid_category_id(client):
     response = await client.get(
@@ -423,7 +429,7 @@ async def test_get_product_filter_invalid_category_id(client):
 
     assert response.status_code == 422
 
-
+@pytest.mark.products
 @pytest.mark.negative
 async def test_get_product_filter_min_price_bellow_border(client):
     response = await client.get(
@@ -435,7 +441,7 @@ async def test_get_product_filter_min_price_bellow_border(client):
 
     assert response.status_code == 422
 
-
+@pytest.mark.products
 @pytest.mark.asyncio
 async def test_get_product_filter_min_price_on_border(client):
     response = await client.get(
@@ -447,7 +453,7 @@ async def test_get_product_filter_min_price_on_border(client):
 
     assert response.status_code == 200
 
-
+@pytest.mark.products
 @pytest.mark.asyncio
 async def test_get_product_filter_invalid_min_price(client):
     response = await client.get(
@@ -459,7 +465,7 @@ async def test_get_product_filter_invalid_min_price(client):
 
     assert response.status_code == 422
 
-
+@pytest.mark.products
 @pytest.mark.negative
 async def test_get_product_incorrect_max_price_bellow_border(client):
     response = await client.get(
@@ -471,7 +477,7 @@ async def test_get_product_incorrect_max_price_bellow_border(client):
 
     assert response.status_code == 422
 
-
+@pytest.mark.products
 @pytest.mark.asyncio
 async def test_get_product_incorrect_max_price_on_border(client):
     response = await client.get(
@@ -483,7 +489,7 @@ async def test_get_product_incorrect_max_price_on_border(client):
 
     assert response.status_code == 200
 
-
+@pytest.mark.products
 @pytest.mark.asyncio
 async def test_get_product_filter_invalid_max_price(client):
     response = await client.get(
@@ -495,7 +501,7 @@ async def test_get_product_filter_invalid_max_price(client):
 
     assert response.status_code == 422
 
-
+@pytest.mark.products
 @pytest.mark.negative
 async def test_get_product_filter_min_more_max(client):
     response = await client.get(
@@ -509,7 +515,7 @@ async def test_get_product_filter_min_more_max(client):
     assert response.status_code == 422
     assert response.text == "The minimum price must be less than the maximum price"
 
-
+@pytest.mark.products
 @pytest.mark.negative
 async def test_get_product_filter_search_bellow_lower_border(client):
     response = await client.get(
@@ -521,7 +527,7 @@ async def test_get_product_filter_search_bellow_lower_border(client):
 
     assert response.status_code == 422
 
-
+@pytest.mark.products
 @pytest.mark.negative
 async def test_get_product_filter_search_on_lower_border(client):
     response = await client.get(
@@ -533,7 +539,7 @@ async def test_get_product_filter_search_on_lower_border(client):
 
     assert response.status_code == 200
 
-
+@pytest.mark.products
 @pytest.mark.asyncio
 async def test_get_product_filter_search_on_upper_border(client):
     response = await client.get(
@@ -545,7 +551,7 @@ async def test_get_product_filter_search_on_upper_border(client):
 
     assert response.status_code == 200
 
-
+@pytest.mark.products
 @pytest.mark.negative
 async def test_get_product_filter_search_above_upper_border(client):
     response = await client.get(
@@ -557,7 +563,7 @@ async def test_get_product_filter_search_above_upper_border(client):
     assert response.status_code == 422
 
 
-
+@pytest.mark.products
 @pytest.mark.negative
 async def test_get_product_filter_invalid_sort_by(client):
     response = await client.get(
@@ -568,7 +574,7 @@ async def test_get_product_filter_invalid_sort_by(client):
     )
     assert response.status_code == 422
 
-
+@pytest.mark.products
 @pytest.mark.negative
 async def test_get_product_filter_invalid_order(client):
     response = await client.get(
@@ -584,27 +590,67 @@ async def test_get_product_filter_invalid_order(client):
 
 
 
+""" GET product_id """
+class StrictProductResponse(ProductResponseSchema):
+    model_config = ConfigDict(from_attributes=True, extra='forbid')
 
+@pytest.mark.product_id
+@pytest.mark.asyncio
+async def test_get_product_response_type(client, product):
+
+    response = await client.get(
+         url=f"{base_path}/{product.id}",
+    )
+
+    assert response.status_code == 200
+    assert response.headers["Content-Type"].startswith("application/json")
+
+    payload = response.json()
+
+    parsed = StrictProductResponse.model_validate(payload)
+
+    assert isinstance(parsed.id, int)
+    assert isinstance(parsed.category_id, int)
+    assert isinstance(parsed.name, str)
+    assert isinstance(parsed.description, str)
+    assert isinstance(parsed.price, Decimal)
+    assert isinstance(parsed.stock, int)
+    assert isinstance(parsed.is_active, bool)
+    assert isinstance(parsed.created_at, datetime)
+
+    assert parsed.created_at.tzinfo is not None
+    assert parsed.price.as_tuple().exponent == -2
+
+
+@pytest.mark.product_id
 @pytest.mark.asyncio
 async def test_get_product_success_id(client, product):
 
     response = await client.get(
-        url=f"{base_path}/{product.id}",
+         url=f"{base_path}/{product.id}",
     )
 
-    result = response.json()
-
     assert response.status_code == 200
-    assert result["id"] == product.id
-    assert result["category_id"] == product.category_id
-    assert result["name"] == "Test product"
-    assert result["description"] == "Product for testing"
-    assert result["price"] == "100.00"
-    assert result["stock"] == 10
-    assert result["is_active"] is True
-    assert "created_at" in result
+    assert response.headers["Content-Type"].startswith("application/json")
 
+    payload = response.json()
 
+    parsed = StrictProductResponse.model_validate(payload)
+
+    assert parsed.id == product.id
+    assert parsed.category_id == product.category_id
+    assert parsed.name == product.name
+    assert parsed.description == product.description
+    assert parsed.stock == product.stock
+    assert parsed.is_active == product.is_active
+
+    assert parsed.price == product.price
+    assert Decimal(parsed.price) == Decimal("100.00") #
+
+    assert parsed.created_at == product.created_at
+    assert parsed.created_at.tzinfo is not None
+
+@pytest.mark.product_id
 @pytest.mark.negative
 async def test_get_product_incorrect_id(client, product):
 
@@ -615,9 +661,23 @@ async def test_get_product_incorrect_id(client, product):
     )
 
     assert response.status_code == 404
-    assert response.text == f"Product with id {product_id} not found"
+    assert response.headers["Content-Type"].startswith("application/json")
+
+    payload = response.json()
+
+    assert payload["error"] == True
+    assert payload["status_code"] == response.status_code
+    assert "detail" in payload
+
+    detail = payload["detail"]
+
+    assert detail["message"] == f"Product with id {product_id} not found"
+    assert detail["product_id"] == product_id
 
 
+
+
+@pytest.mark.product_id
 @pytest.mark.negative
 async def test_get_product_invalid_id(client, product):
 
@@ -628,4 +688,5 @@ async def test_get_product_invalid_id(client, product):
     )
 
     assert response.status_code == 422
-
+    assert response.headers["Content-Type"].startswith("application/json")
+    assert "detail" in response.json()
