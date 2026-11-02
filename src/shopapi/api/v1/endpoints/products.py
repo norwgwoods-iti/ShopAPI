@@ -58,9 +58,11 @@ async def get_products(
 
     if min_price is not None and max_price is not None:
         if min_price > max_price:
-            return Response(
+            raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
-                content="The minimum price must be less than the maximum price",
+                detail={
+                    "message": "The minimum price must be less than the maximum price"
+                }
             )
 
     query = (
@@ -84,9 +86,11 @@ async def get_products(
         )
 
     if search is not None:
-        query = query.where(
-            ProductModel.name.ilike(f"%{search.strip()}%")
-        )
+        normalized = search.strip()
+        if normalized:
+            query = query.where(
+                ProductModel.name.ilike(f"%{normalized}%")
+            )
 
     sort_column = {
         "price": ProductModel.price,
