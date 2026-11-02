@@ -31,11 +31,13 @@ dev = [
 ]
 
 [tool.pytest.ini_options]
-pythonpath = ["src"]
+pythonpath = [".", "src"]
 testpaths = ["tests"]
 asyncio_mode = "auto"
 markers= [
-    "negative: negative test"
+    "negative: negative test",
+    "products: get products",
+    "product_id: get id product"
 ]
 
 
