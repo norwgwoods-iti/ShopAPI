@@ -5,12 +5,12 @@ def parse_product(*, response, schema):
 
     payload = response.json()
 
-    parse = schema.model_validate(payload)
+    parsed = schema.model_validate(payload)
 
-    return parse
+    return parsed
 
-def http_except_error_detail(*, payload, response):
-    assert payload["error"] == True
+def parse_error_detail(*, payload, response):
+    assert payload["error"] is True
     assert payload["status_code"] == response.status_code
     assert "detail" in payload
 
