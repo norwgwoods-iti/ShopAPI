@@ -4,7 +4,7 @@ from decimal import Decimal
 import pytest
 
 from tests.schemas import StrictProductListResponse
-from tests.utils import parse_product, http_except_error_detail
+from tests.utils import parse_product, parse_error_detail
 
 base_path = "/api/v1/products"
 
@@ -581,7 +581,7 @@ async def test_get_product_filter_min_more_max(client):
 
     payload = response.json()
 
-    detail = http_except_error_detail(payload=payload, response=response)
+    detail = parse_error_detail(payload=payload, response=response)
 
     assert detail["message"] == "The minimum price must be less than the maximum price"
 
