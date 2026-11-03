@@ -89,7 +89,7 @@ async def get_category(
     if not category:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Category {category_id} not found"
+            detail=f"Category with id='{category_id}' not found"
         )
 
     return category
@@ -145,11 +145,10 @@ async def update_category(
         current_admin: Annotated[UserModel, Depends(get_current_admin)]
 ):
     category = await session.get(CategoryModel, category_id)
-
     if not category:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Category {category_id} not found"
+            detail=f"Category with id='{category_id}' not found"
         )
 
     update_data = form_data.model_dump(exclude_unset=True)
@@ -165,15 +164,14 @@ async def update_category(
 
     try:
         await session.commit()
-    except IntegrityError:
+    except IntegrityError as e:
         await session.rollback()
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail=f"Category '{form_data.name}' already exists"
-        )
+            detail=f"Category with name='{form_data.name}' already exists"
+        ) from e
 
     await session.refresh(category)
-
     return category
 
 
@@ -187,13 +185,11 @@ async def update_category(
         current_admin: Annotated[UserModel, Depends(get_current_admin)]
 ):
     category = await session.get(CategoryModel, category_id)
-
     if not category:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Category {category_id} not found"
+            detail=f"Category with id='{category_id}' not found"
         )
 
     await session.delete(category)
-
     await session.commit()
