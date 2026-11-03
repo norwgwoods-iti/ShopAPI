@@ -6,7 +6,7 @@ from sqlalchemy.exc import IntegrityError
 from starlette import status
 from starlette.responses import Response
 
-from shopapi.api.v1.endpoints.auth import get_current_user
+from shopapi.api.v1.endpoints.auth import get_current_user, get_current_admin
 from shopapi.db.session import SessionDep
 from shopapi.models import UserModel
 from shopapi.models.category import CategoryModel
@@ -17,15 +17,19 @@ router = APIRouter(
     tags=["Categories"]
 )
 
-@router.get("/", response_model=ProductListResponseSchema)
+
+@router.get(
+    path="/",
+    response_model=ProductListResponseSchema
+)
 async def get_categories(
         session: SessionDep,
+        current_user: Annotated[UserModel, Depends(get_current_user)],
         page: int = Query(default=1, ge=1),
         page_size: int = Query(default=20, ge=1, le=100),
         search: str | None = Query(default=None, min_length=1, max_length=100),
         sort_by: Literal["name", "slug"] = "name",
         order: Literal["asc", "desc"] = "asc",
-
 ):
 
     query = (
@@ -34,9 +38,11 @@ async def get_categories(
     )
 
     if search is not None:
-        query = query.where(
-            CategoryModel.name.ilike(f"%{search.split()}%")
-        )
+        normalized = search.strip()
+        if normalized:
+            query = query.where(
+                CategoryModel.name.ilike(f"%{normalized}%")
+            )
 
     sort_column = {
         "name": CategoryModel.name,
@@ -59,8 +65,6 @@ async def get_categories(
     result = await session.scalars(query)
     items = result.all()
 
-
-
     return ProductListResponseSchema(
         total=total or 0,
         page=page,
@@ -69,10 +73,13 @@ async def get_categories(
     )
 
 
-
-@router.get("/{category_id}", response_model=CategoryResponseSchema)
+@router.get(
+    path="/{category_id}",
+    response_model=CategoryResponseSchema
+)
 async def get_category(
         session: SessionDep,
+        current_user: Annotated[UserModel, Depends(get_current_user)],
         category_id: int
 ):
 
@@ -96,7 +103,7 @@ async def get_category(
 async def create_category(
         session: SessionDep,
         form_data: CategoryCreateSchema,
-        current_user: Annotated[UserModel, Depends(get_current_user)]
+        current_admin: Annotated[UserModel, Depends(get_current_admin)]
 ):
     query = select(CategoryModel).where(CategoryModel.name == form_data.name)
     result = await session.execute(query)
