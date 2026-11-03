@@ -9,10 +9,10 @@ from starlette import status
 
 from shopapi.api.v1.endpoints.auth import get_current_user, get_current_admin
 from shopapi.db.session import get_session, SessionDep
-from shopapi.models import UserModel
+from shopapi.models import UserModel, CategoryModel
 from shopapi.models.product import ProductModel
 from shopapi.schemas.product import ProductResponseSchema, ProductListResponseSchema, ProductResponseCreateSchema, \
-    ProductCreateSchema
+    ProductCreateSchema, ProductUpdateSchema
 
 router = APIRouter(
     prefix="/products",
@@ -34,7 +34,7 @@ async def get_product(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail={
-                "message": f"Product with id {product_id} not found",
+                "message": f"Product with id='{product_id}' not found",
                 "product_id": product_id,
             }
         )
@@ -128,7 +128,7 @@ async def get_products(
 
 @router.post(
     path="/",
-    response_model=ProductResponseCreateSchema,
+    response_model=ProductResponseSchema,
     status_code=status.HTTP_201_CREATED,
 )
 async def create_product(
@@ -151,3 +151,64 @@ async def create_product(
 
     await session.refresh(new_product)
     return new_product
+
+@router.patch(
+    path="/{product_id}",
+    response_model=ProductResponseSchema,
+    status_code=status.HTTP_200_OK,
+)
+async def update_product(
+        session: SessionDep,
+        product_id: int,
+        form_data: ProductUpdateSchema,
+        current_admin: Annotated[UserModel, Depends(get_current_admin)],
+):
+    product = await session.get(ProductModel, product_id)
+    if not product:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Product with id='{product_id}' not found",
+        )
+
+    update_data = form_data.model_dump(exclude_unset=True)
+
+    if not update_data:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No fields provided for update",
+        )
+
+    for field, value in update_data.items():
+        setattr(product, field, value)
+
+    try:
+        await session.commit()
+    except IntegrityError as e:
+        await session.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"Product with name='{form_data.name}' already exists"
+        ) from e
+
+    await session.refresh(product)
+    return product
+
+
+@router.delete(
+    path="/{product_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+async def delete_product(
+        session: SessionDep,
+        product_id: int,
+        current_admin: Annotated[UserModel, Depends(get_current_admin)],
+):
+    product = await session.get(ProductModel, product_id)
+    if not product:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Product with id='{product_id}' not found",
+        )
+
+    await session.delete(product)
+    await session.commit()
