@@ -10,8 +10,8 @@ base_path = "/api/v1/products"
 
 @pytest.mark.products
 @pytest.mark.asyncio
-async def test_get_products_contract(client, products):
-    response = await client.get(
+async def test_get_products_contract(auth_client, products):
+    response = await auth_client.get(
         url=f"{base_path}/",
     )
 
@@ -41,8 +41,8 @@ async def test_get_products_contract(client, products):
 
 @pytest.mark.products
 @pytest.mark.asyncio
-async def test_get_product_success(client, product):
-    response = await client.get(
+async def test_get_product_success(auth_client, product):
+    response = await auth_client.get(
         url=f"{base_path}/",
     )
 
@@ -72,8 +72,8 @@ async def test_get_product_success(client, product):
 
 @pytest.mark.products
 @pytest.mark.asyncio
-async def test_get_products_success(client, products):
-    response = await client.get(
+async def test_get_products_success(auth_client, products):
+    response = await auth_client.get(
         url=f"{base_path}/",
     )
 
@@ -104,9 +104,9 @@ async def test_get_products_success(client, products):
 
 @pytest.mark.products
 @pytest.mark.asyncio
-async def test_get_products_filter_empty_page(client, product):
+async def test_get_products_filter_empty_page(auth_client, product):
 
-    response = await client.get(
+    response = await auth_client.get(
         url=f"{base_path}/",
         params={
             "page": 9
@@ -127,8 +127,8 @@ async def test_get_products_filter_empty_page(client, product):
 
 @pytest.mark.products
 @pytest.mark.asyncio
-async def test_get_products_filter_page_size(client, products):
-    response = await client.get(
+async def test_get_products_filter_page_size(auth_client, products):
+    response = await auth_client.get(
         url=f"{base_path}/",
         params={
             "page_size": 2,
@@ -153,11 +153,11 @@ async def test_get_products_filter_page_size(client, products):
 
 @pytest.mark.products
 @pytest.mark.asyncio
-async def test_get_products_filter_category_id(client, products):
+async def test_get_products_filter_category_id(auth_client, products):
 
     expend_category_id = products[1].category_id
 
-    response = await client.get(
+    response = await auth_client.get(
         url=f"{base_path}/",
         params={
             "category_id": expend_category_id,
@@ -186,8 +186,8 @@ async def test_get_products_filter_category_id(client, products):
 
 @pytest.mark.products
 @pytest.mark.asyncio
-async def test_get_products_filter_min_price(client, products):
-    response = await client.get(
+async def test_get_products_filter_min_price(auth_client, products):
+    response = await auth_client.get(
         url=f"{base_path}/",
         params={
             "min_price": 2000.00,
@@ -216,8 +216,8 @@ async def test_get_products_filter_min_price(client, products):
 
 @pytest.mark.products
 @pytest.mark.asyncio
-async def test_get_products_filter_max_price(client, products):
-    response = await client.get(
+async def test_get_products_filter_max_price(auth_client, products):
+    response = await auth_client.get(
         url=f"{base_path}/",
         params={
             "max_price": 1200.00,
@@ -245,8 +245,8 @@ async def test_get_products_filter_max_price(client, products):
 
 @pytest.mark.products
 @pytest.mark.asyncio
-async def test_get_products_filter_min_max_price(client, products):
-    response = await client.get(
+async def test_get_products_filter_min_max_price(auth_client, products):
+    response = await auth_client.get(
         url=f"{base_path}/",
         params={
             "min_price": 1500.00,
@@ -278,8 +278,8 @@ async def test_get_products_filter_min_max_price(client, products):
 
 @pytest.mark.products
 @pytest.mark.asyncio
-async def test_get_products_filter_search(client, products):
-    response = await client.get(
+async def test_get_products_filter_search(auth_client, products):
+    response = await auth_client.get(
         url=f"{base_path}/",
         params={
             "search": "product 2",
@@ -315,8 +315,8 @@ async def test_get_products_filter_search(client, products):
         ("created_at", "desc"), ("created_at", "asc"),
     ]
 )
-async def test_get_products_sorting(client, products, sort_by, order):
-    response = await client.get(
+async def test_get_products_sorting(auth_client, products, sort_by, order):
+    response = await auth_client.get(
         url=f"{base_path}/",
         params={
             "sort_by": sort_by,
@@ -352,8 +352,8 @@ async def test_get_products_sorting(client, products, sort_by, order):
 
 @pytest.mark.products
 @pytest.mark.negative
-async def test_get_product_filter_page_bellow_border(client):
-    response = await client.get(
+async def test_get_product_filter_page_bellow_border(auth_client):
+    response = await auth_client.get(
         url=f"{base_path}/",
         params={
             "page": 0
@@ -364,8 +364,8 @@ async def test_get_product_filter_page_bellow_border(client):
 
 @pytest.mark.products
 @pytest.mark.negative
-async def test_get_product_filter_invalid_page(client):
-    response = await client.get(
+async def test_get_product_filter_invalid_page(auth_client):
+    response = await auth_client.get(
         url=f"{base_path}/",
         params={
             "page": "invalid-page"
@@ -376,8 +376,8 @@ async def test_get_product_filter_invalid_page(client):
 
 @pytest.mark.products
 @pytest.mark.negative
-async def test_get_product_filter_page_size_bellow_border(client):
-    response = await client.get(
+async def test_get_product_filter_page_size_bellow_border(auth_client):
+    response = await auth_client.get(
         url=f"{base_path}/",
         params={
             "page_size": 0
@@ -388,8 +388,8 @@ async def test_get_product_filter_page_size_bellow_border(client):
 
 @pytest.mark.products
 @pytest.mark.asyncio
-async def test_get_product_filter_page_size_on_border(client, products):
-    response = await client.get(
+async def test_get_product_filter_page_size_on_border(auth_client, products):
+    response = await auth_client.get(
         url=f"{base_path}/",
         params={
             "page_size": 100
@@ -413,8 +413,8 @@ async def test_get_product_filter_page_size_on_border(client, products):
 
 @pytest.mark.products
 @pytest.mark.negative
-async def test_get_product_filter_page_size_above_border(client):
-    response = await client.get(
+async def test_get_product_filter_page_size_above_border(auth_client):
+    response = await auth_client.get(
         url=f"{base_path}/",
         params={
             "page_size": 101
@@ -425,8 +425,8 @@ async def test_get_product_filter_page_size_above_border(client):
 
 @pytest.mark.products
 @pytest.mark.negative
-async def test_get_product_filter_invalid_page_size(client):
-    response = await client.get(
+async def test_get_product_filter_invalid_page_size(auth_client):
+    response = await auth_client.get(
         url=f"{base_path}/",
         params={
             "page_size": "invalid-page_size"
@@ -437,8 +437,8 @@ async def test_get_product_filter_invalid_page_size(client):
 
 @pytest.mark.products
 @pytest.mark.negative
-async def test_get_product_filter_category_id_bellow_border(client):
-    response = await client.get(
+async def test_get_product_filter_category_id_bellow_border(auth_client):
+    response = await auth_client.get(
         url=f"{base_path}/",
         params={
             "category_id": 0
@@ -449,8 +449,8 @@ async def test_get_product_filter_category_id_bellow_border(client):
 
 @pytest.mark.products
 @pytest.mark.negative
-async def test_get_product_filter_invalid_category_id(client):
-    response = await client.get(
+async def test_get_product_filter_invalid_category_id(auth_client):
+    response = await auth_client.get(
         url=f"{base_path}/",
         params={
             "category_id": "invalid-category_id"
@@ -461,8 +461,8 @@ async def test_get_product_filter_invalid_category_id(client):
 
 @pytest.mark.products
 @pytest.mark.negative
-async def test_get_product_filter_min_price_bellow_border(client):
-    response = await client.get(
+async def test_get_product_filter_min_price_bellow_border(auth_client):
+    response = await auth_client.get(
         url=f"{base_path}/",
         params={
             "min_price": -1
@@ -473,8 +473,8 @@ async def test_get_product_filter_min_price_bellow_border(client):
 
 @pytest.mark.products
 @pytest.mark.asyncio
-async def test_get_product_filter_min_price_on_border(client, products):
-    response = await client.get(
+async def test_get_product_filter_min_price_on_border(auth_client, products):
+    response = await auth_client.get(
         url=f"{base_path}/",
         params={
             "min_price": 0
@@ -502,8 +502,8 @@ async def test_get_product_filter_min_price_on_border(client, products):
 
 @pytest.mark.products
 @pytest.mark.asyncio
-async def test_get_product_filter_invalid_min_price(client):
-    response = await client.get(
+async def test_get_product_filter_invalid_min_price(auth_client):
+    response = await auth_client.get(
         url=f"{base_path}/",
         params={
             "min_price": "invalid-min-price"
@@ -514,8 +514,8 @@ async def test_get_product_filter_invalid_min_price(client):
 
 @pytest.mark.products
 @pytest.mark.negative
-async def test_get_product_incorrect_max_price_bellow_border(client):
-    response = await client.get(
+async def test_get_product_incorrect_max_price_bellow_border(auth_client):
+    response = await auth_client.get(
         url=f"{base_path}/",
         params={
             "max_price": -1
@@ -526,8 +526,8 @@ async def test_get_product_incorrect_max_price_bellow_border(client):
 
 @pytest.mark.products
 @pytest.mark.asyncio
-async def test_get_product_incorrect_max_price_on_border(client, products):
-    response = await client.get(
+async def test_get_product_incorrect_max_price_on_border(auth_client, products):
+    response = await auth_client.get(
         url=f"{base_path}/",
         params={
             "max_price": 0
@@ -555,8 +555,8 @@ async def test_get_product_incorrect_max_price_on_border(client, products):
 
 @pytest.mark.products
 @pytest.mark.asyncio
-async def test_get_product_filter_invalid_max_price(client):
-    response = await client.get(
+async def test_get_product_filter_invalid_max_price(auth_client):
+    response = await auth_client.get(
         url=f"{base_path}/",
         params={
             "max_price": "invalid-min-price"
@@ -567,8 +567,8 @@ async def test_get_product_filter_invalid_max_price(client):
 
 @pytest.mark.products
 @pytest.mark.negative
-async def test_get_product_filter_min_more_max(client):
-    response = await client.get(
+async def test_get_product_filter_min_more_max(auth_client):
+    response = await auth_client.get(
         url=f"{base_path}/",
         params={
             "min_price": 3000,
@@ -588,8 +588,8 @@ async def test_get_product_filter_min_more_max(client):
 
 @pytest.mark.products
 @pytest.mark.negative
-async def test_get_product_filter_search_bellow_lower_border(client):
-    response = await client.get(
+async def test_get_product_filter_search_bellow_lower_border(auth_client):
+    response = await auth_client.get(
         url=f"{base_path}/",
         params={
             "search": "",
@@ -600,8 +600,8 @@ async def test_get_product_filter_search_bellow_lower_border(client):
 
 @pytest.mark.products
 @pytest.mark.negative
-async def test_get_product_filter_search_on_lower_border(client, products):
-    response = await client.get(
+async def test_get_product_filter_search_on_lower_border(auth_client, products):
+    response = await auth_client.get(
         url=f"{base_path}/",
         params={
             "search": "g",
@@ -629,8 +629,8 @@ async def test_get_product_filter_search_on_lower_border(client, products):
 
 @pytest.mark.products
 @pytest.mark.asyncio
-async def test_get_product_filter_search_on_upper_border(client, products   ):
-    response = await client.get(
+async def test_get_product_filter_search_on_upper_border(auth_client, products   ):
+    response = await auth_client.get(
         url=f"{base_path}/",
         params={
             "search": "s"*100,
@@ -658,8 +658,8 @@ async def test_get_product_filter_search_on_upper_border(client, products   ):
 
 @pytest.mark.products
 @pytest.mark.negative
-async def test_get_product_filter_search_above_upper_border(client):
-    response = await client.get(
+async def test_get_product_filter_search_above_upper_border(auth_client):
+    response = await auth_client.get(
         url=f"{base_path}/",
         params={
             "search": "s"*101,
@@ -670,8 +670,8 @@ async def test_get_product_filter_search_above_upper_border(client):
 
 @pytest.mark.products
 @pytest.mark.negative
-async def test_get_product_filter_invalid_sort_by(client):
-    response = await client.get(
+async def test_get_product_filter_invalid_sort_by(auth_client):
+    response = await auth_client.get(
         url=f"{base_path}/",
         params={
             "sort_by": "invalid-sort_by",
@@ -681,8 +681,8 @@ async def test_get_product_filter_invalid_sort_by(client):
 
 @pytest.mark.products
 @pytest.mark.negative
-async def test_get_product_filter_invalid_order(client):
-    response = await client.get(
+async def test_get_product_filter_invalid_order(auth_client):
+    response = await auth_client.get(
         url=f"{base_path}/",
         params={
             "order": "invalid-order",

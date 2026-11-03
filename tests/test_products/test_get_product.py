@@ -8,14 +8,12 @@ from tests.utils import parse_product
 
 base_path = "/api/v1/products"
 
-
-
 @pytest.mark.product_id
 @pytest.mark.asyncio
-async def test_get_product_response_type(client, product):
+async def test_get_product_response_type(auth_client, product):
 
-    response = await client.get(
-         url=f"{base_path}/{product.id}",
+    response = await auth_client.get(
+        url=f"{base_path}/{product.id}",
     )
 
     parsed = parse_product(response=response, schema=StrictProductResponse)
@@ -35,9 +33,9 @@ async def test_get_product_response_type(client, product):
 
 @pytest.mark.product_id
 @pytest.mark.asyncio
-async def test_get_product_success_id(client, product):
+async def test_get_product_success_id(auth_client, product):
 
-    response = await client.get(
+    response = await auth_client.get(
          url=f"{base_path}/{product.id}",
     )
 
@@ -59,11 +57,11 @@ async def test_get_product_success_id(client, product):
 
 @pytest.mark.product_id
 @pytest.mark.negative
-async def test_get_product_incorrect_id(client, product):
+async def test_get_product_incorrect_id(auth_client, product):
 
     product_id = 9999999
 
-    response = await client.get(
+    response = await auth_client.get(
         url=f"{base_path}/{product_id}",
     )
 
@@ -84,11 +82,11 @@ async def test_get_product_incorrect_id(client, product):
 
 @pytest.mark.product_id
 @pytest.mark.negative
-async def test_get_product_invalid_id(client, product):
+async def test_get_product_invalid_id(auth_client, product):
 
     product_id = 'invalid-id'
 
-    response = await client.get(
+    response = await auth_client.get(
         url=f"{base_path}/{product_id}",
     )
 
