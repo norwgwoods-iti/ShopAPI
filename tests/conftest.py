@@ -5,15 +5,18 @@ from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
 
 from shopapi.core.config import settings
+from shopapi.core.security import hash_password
 from shopapi.db.base import Base
 from shopapi.db.session import get_session
 from shopapi.main import app
-from shopapi.models import CategoryModel, ProductModel
+from shopapi.models import CategoryModel, ProductModel, UserModel
 
 import asyncio
 import sys
 from collections.abc import Callable, Mapping
 import pytest
+
+from shopapi.models.enums import UserRole
 
 """ SelectorEventLoop для Windows """
 def pytest_asyncio_loop_factories(
@@ -105,7 +108,6 @@ async def product(db_session):
 
 @pytest_asyncio.fixture()
 async def products(db_session):
-
     categories = [
         CategoryModel(
             name=f"Test category {i}",
@@ -138,3 +140,68 @@ async def products(db_session):
     await db_session.commit()
 
     return products
+
+
+""" Create user and GET token """
+@pytest_asyncio.fixture()
+async def auth_client(db_session, client):
+    user_info={
+        "email": "test@example.ru",
+        "password": "!TestPassword123",
+        "role": UserRole.USER
+    }
+    user = UserModel(
+        email=user_info["email"],
+        password_hash=hash_password(user_info["password"]),
+        role=user_info["role"]
+    )
+
+    db_session.add(user)
+    await db_session.commit()
+
+    response_log = await client.post(
+        url="/api/v1/auth/login",
+        data={
+            "username": user_info["email"],
+            "password": user_info["password"],
+        }
+    )
+    assert response_log.status_code == 200
+
+    auth_token = response_log.json()["access_token"]
+
+    client.headers["Authorization"] = f"Bearer {auth_token}"
+
+    return client
+
+
+""" Create admin and GET token """
+@pytest_asyncio.fixture()
+async def admin_client(db_session, client):
+    admin_info={
+        "email": "admin@example.ru",
+        "password": "!AdminPassword123",
+        "role": UserRole.ADMIN
+    }
+    admin = UserModel(
+        email=admin_info["email"],
+        password_hash=hash_password(admin_info["password"]),
+        role=admin_info["role"],
+    )
+    db_session.add(admin)
+    await db_session.commit()
+
+    response_log = await client.post(
+        url="/api/v1/auth/login",
+        data={
+            "username": admin_info["email"],
+            "password": admin_info["password"],
+        }
+    )
+    assert response_log.status_code == 200
+
+    auth_token = response_log.json()["access_token"]
+
+    client.headers["Authorization"] = f"Bearer {auth_token}"
+
+    return client
