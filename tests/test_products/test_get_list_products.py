@@ -145,16 +145,22 @@ async def test_get_products_filter_page_size(client, products):
     assert parsed.total == len(products)
     assert parsed.page == 1
     assert parsed.page_size == query_page_size
-    assert len(parsed.items) == query_page_size
+    if len(products) >= query_page_size:
+        assert len(parsed.items) == query_page_size
+    else:
+        assert len(parsed.items) == len(products)
 
 
 @pytest.mark.products
 @pytest.mark.asyncio
 async def test_get_products_filter_category_id(client, products):
+
+    expend_category_id = products[1].category_id
+
     response = await client.get(
         url=f"{base_path}/",
         params={
-            "category_id": 2,
+            "category_id": expend_category_id,
         }
     )
 
@@ -165,15 +171,17 @@ async def test_get_products_filter_category_id(client, products):
 
     query_category_id = int(response.request.url.params.get("category_id"))
 
-    ids = [p.id for p in products if p.category_id == query_category_id]
+    expected_ids = [p.id for p in products if p.category_id == query_category_id]
+    actual_ids = [item.id for item in parsed.items]
+    assert set(actual_ids) == set(expected_ids)
 
-    assert parsed.total == len(ids)
+    assert parsed.total == len(expected_ids)
     assert parsed.page == 1
     assert parsed.page_size == 20
     if parsed.total >= parsed.page_size:
         assert len(parsed.items) == parsed.page_size
     else:
-        assert len(parsed.items) == len(ids)
+        assert len(parsed.items) == len(expected_ids)
 
 
 @pytest.mark.products
@@ -193,15 +201,17 @@ async def test_get_products_filter_min_price(client, products):
 
     query_min_price = Decimal(response.request.url.params.get("min_price"))
 
-    ids = [p.id for p in products if p.price >= query_min_price]
+    expected_ids = [p.id for p in products if p.price >= query_min_price]
+    actual_ids = [item.id for item in parsed.items]
+    assert set(actual_ids) == set(expected_ids)
 
-    assert parsed.total == len(ids)
+    assert parsed.total == len(expected_ids)
     assert parsed.page == 1
     assert parsed.page_size == 20
     if parsed.total >= parsed.page_size:
         assert len(parsed.items) == parsed.page_size
     else:
-        assert len(parsed.items) == len(ids)
+        assert len(parsed.items) == len(expected_ids)
 
 
 @pytest.mark.products
@@ -221,15 +231,17 @@ async def test_get_products_filter_max_price(client, products):
 
     query_max_price = Decimal(response.request.url.params.get("max_price"))
 
-    ids = [p.id for p in products if p.price <= query_max_price]
+    expected_ids = [p.id for p in products if p.price <= query_max_price]
+    actual_ids = [item.id for item in parsed.items]
+    assert set(actual_ids) == set(expected_ids)
 
-    assert parsed.total == len(ids)
+    assert parsed.total == len(expected_ids)
     assert parsed.page == 1
     assert parsed.page_size == 20
     if parsed.total >= parsed.page_size:
         assert len(parsed.items) == parsed.page_size
     else:
-        assert len(parsed.items) == len(ids)
+        assert len(parsed.items) == len(expected_ids)
 
 @pytest.mark.products
 @pytest.mark.asyncio
@@ -251,15 +263,18 @@ async def test_get_products_filter_min_max_price(client, products):
     query_min_price = Decimal(query_params.get("min_price"))
     query_max_price = Decimal(query_params.get("max_price"))
 
-    ids = [p.id for p in products if p.price >= query_min_price and p.price <= query_max_price]
+    expected_ids = [p.id for p in products if p.price >= query_min_price and p.price <= query_max_price]
+    actual_ids = [item.id for item in parsed.items]
+    assert set(actual_ids) == set(expected_ids)
 
-    assert parsed.total == len(ids)
+
+    assert parsed.total == len(expected_ids)
     assert parsed.page == 1
     assert parsed.page_size == 20
     if parsed.total >= parsed.page_size:
         assert len(parsed.items) == parsed.page_size
     else:
-        assert len(parsed.items) == len(ids)
+        assert len(parsed.items) == len(expected_ids)
 
 @pytest.mark.products
 @pytest.mark.asyncio
@@ -278,15 +293,17 @@ async def test_get_products_filter_search(client, products):
 
     query_search = str(response.request.url.params.get("search"))
 
-    ids = [p.id for p in products if query_search in p.name]
+    expected_ids = [p.id for p in products if query_search in p.name]
+    actual_ids = [item.id for item in parsed.items]
+    assert set(actual_ids) == set(expected_ids)
 
-    assert parsed.total == len(ids)
+    assert parsed.total == len(expected_ids)
     assert parsed.page == 1
     assert parsed.page_size == 20
     if parsed.total >= parsed.page_size:
         assert len(parsed.items) == parsed.page_size
     else:
-        assert len(parsed.items) == len(ids)
+        assert len(parsed.items) == len(expected_ids)
 
 @pytest.mark.products
 @pytest.mark.asyncio
@@ -471,15 +488,17 @@ async def test_get_product_filter_min_price_on_border(client, products):
 
     query_min_price = Decimal(response.request.url.params.get("min_price"))
 
-    ids = [p.id for p in products if p.price >= query_min_price]
+    expected_ids = [p.id for p in products if p.price >= query_min_price]
+    actual_ids = [p.id for p in parsed.items]
+    assert set(actual_ids) == set(expected_ids)
 
-    assert parsed.total == len(ids)
+    assert parsed.total == len(expected_ids)
     assert parsed.page == 1
     assert parsed.page_size == 20
     if parsed.total >= parsed.page_size:
         assert len(parsed.items) == parsed.page_size
     else:
-        assert len(parsed.items) == len(ids)
+        assert len(parsed.items) == len(expected_ids)
 
 @pytest.mark.products
 @pytest.mark.asyncio
@@ -522,15 +541,17 @@ async def test_get_product_incorrect_max_price_on_border(client, products):
 
     query_max_price = Decimal(response.request.url.params.get("max_price"))
 
-    ids = [p.id for p in products if p.price <= query_max_price]
+    expected_ids = [p.id for p in products if p.price <= query_max_price]
+    actual_ids = [p.id for p in parsed.items]
+    assert set(actual_ids) == set(expected_ids)
 
-    assert parsed.total == len(ids)
+    assert parsed.total == len(expected_ids)
     assert parsed.page == 1
     assert parsed.page_size == 20
     if parsed.total >= parsed.page_size:
         assert len(parsed.items) == parsed.page_size
     else:
-        assert len(parsed.items) == len(ids)
+        assert len(parsed.items) == len(expected_ids)
 
 @pytest.mark.products
 @pytest.mark.asyncio
@@ -594,15 +615,17 @@ async def test_get_product_filter_search_on_lower_border(client, products):
 
     query_search = str(response.request.url.params.get("search"))
 
-    ids = [p.id for p in products if query_search in p.name]
+    expected_ids = [p.id for p in products if query_search.casefold() in p.name.casefold()]
+    actual_ids = [p.id for p in parsed.items]
+    assert set(actual_ids) == set(expected_ids)
 
-    assert parsed.total == len(ids)
+    assert parsed.total == len(expected_ids)
     assert parsed.page == 1
     assert parsed.page_size == 20
     if parsed.total >= parsed.page_size:
         assert len(parsed.items) == parsed.page_size
     else:
-        assert len(parsed.items) == len(ids)
+        assert len(parsed.items) == len(expected_ids)
 
 @pytest.mark.products
 @pytest.mark.asyncio
@@ -621,15 +644,17 @@ async def test_get_product_filter_search_on_upper_border(client, products   ):
 
     query_search = str(response.request.url.params.get("search"))
 
-    ids = [p.id for p in products if query_search in p.name]
+    expected_ids = [p.id for p in products if query_search in p.name]
+    actual_ids = [p.id for p in parsed.items]
+    assert set(actual_ids) == set(expected_ids)
 
-    assert parsed.total == len(ids)
+    assert parsed.total == len(expected_ids)
     assert parsed.page == 1
     assert parsed.page_size == 20
     if parsed.total >= parsed.page_size:
         assert len(parsed.items) == parsed.page_size
     else:
-        assert len(parsed.items) == len(ids)
+        assert len(parsed.items) == len(expected_ids)
 
 @pytest.mark.products
 @pytest.mark.negative
@@ -664,3 +689,12 @@ async def test_get_product_filter_invalid_order(client):
         }
     )
     assert response.status_code == 422
+
+"""
+Пагинация	Проверку второй страницы, когда на ней есть товары
+Категория	Проверку несуществующего category_id — ожидается пустой список
+Цена	Проверку min_price == max_price
+Поиск	Проверку поиска с другим регистром и пробелами по краям
+Сортировка	Проверку сортировки при одинаковых значениях цены или имени
+Активность	Отдельный тест, подтверждающий, что неактивные товары не попадают в список
+"""
