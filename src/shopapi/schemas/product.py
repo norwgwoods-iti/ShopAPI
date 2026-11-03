@@ -2,25 +2,6 @@ from datetime import date, datetime
 from decimal import Decimal
 from pydantic import BaseModel, Field, ConfigDict
 
-
-
-
-# class ProductAddSchema(BaseModel):
-#     category_id: int
-#     name: str
-#     description : str | None
-#     price: Decimal
-#     stock: int
-#
-#     model_config = ConfigDict(from_attributes=True)
-
-# class ProductResponseSchema(BaseModel):
-#     id: int
-#     is_active: bool
-#     created_at: datetime
-#
-#     model_config = ConfigDict(from_attributes=True)
-
 class ProductResponseSchema(BaseModel):
     id: int
     category_id: int
@@ -54,3 +35,11 @@ class ProductResponseCreateSchema(ProductCreateSchema):
     is_active: bool = True
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class ProductUpdateSchema(BaseModel):
+    name: str | None = None
+    description: str | None = None
+    category_id: int | None = None
+    price: Decimal | None = None
+    stock: int  | None = None
