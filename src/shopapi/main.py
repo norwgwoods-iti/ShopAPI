@@ -43,8 +43,12 @@ async def health_check():
         ) from exc
     return {"status": "ok"}
 
+
 @app.exception_handler(HTTPException)
-async def http_exception_handler(request: Request, exc: HTTPException):
+async def http_exception_handler(
+        request: Request,
+        exc: HTTPException
+):
     return JSONResponse(
         status_code = exc.status_code,
         content={
