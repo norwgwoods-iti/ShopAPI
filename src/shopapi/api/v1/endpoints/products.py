@@ -1,14 +1,15 @@
 from decimal import Decimal
-from fastapi import HTTPException
-from typing import Literal
+from fastapi import HTTPException, Depends
+from typing import Literal, Annotated
 
 from fastapi import APIRouter, Query
 from sqlalchemy import select, func
 from sqlalchemy.exc import IntegrityError
 from starlette import status
-from starlette.responses import Response
 
+from shopapi.api.v1.endpoints.auth import get_current_user, get_current_admin
 from shopapi.db.session import get_session, SessionDep
+from shopapi.models import UserModel
 from shopapi.models.product import ProductModel
 from shopapi.schemas.product import ProductResponseSchema, ProductListResponseSchema, ProductResponseCreateSchema, \
     ProductCreateSchema
@@ -24,25 +25,30 @@ router = APIRouter(
 )
 async def get_product(
         product_id: int,
+        current_user: Annotated[UserModel, Depends(get_current_user)],
         session: SessionDep
 ):
     product = await session.get(ProductModel, product_id)
 
     if not product:
-        return Response(
+        raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            content=f"Product with id {product_id} not found"
+            detail={
+                "message": f"Product with id {product_id} not found",
+                "product_id": product_id,
+            }
         )
 
     return product
 
-
+"user"
 @router.get(
     path="/",
     response_model=ProductListResponseSchema
 )
 async def get_products(
         session: SessionDep,
+        current_user: Annotated[UserModel, Depends(get_current_user)],
         page: int = Query(default=1, ge=1),
         page_size: int = Query(default=20, ge=1, le=100),
         category_id: int | None = Query(default=None, ge=1),
@@ -55,9 +61,11 @@ async def get_products(
 
     if min_price is not None and max_price is not None:
         if min_price > max_price:
-            return Response(
+            raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
-                content="The minimum price must be less than the maximum price",
+                detail={
+                    "message": "The minimum price must be less than the maximum price"
+                }
             )
 
     query = (
@@ -81,9 +89,11 @@ async def get_products(
         )
 
     if search is not None:
-        query = query.where(
-            ProductModel.name.ilike(f"%{search.strip()}%")
-        )
+        normalized = search.strip()
+        if normalized:
+            query = query.where(
+                ProductModel.name.ilike(f"%{normalized}%")
+            )
 
     sort_column = {
         "price": ProductModel.price,
@@ -124,6 +134,7 @@ async def get_products(
 async def create_product(
         product: ProductCreateSchema,
         session: SessionDep,
+        current_admin: Annotated[UserModel, Depends(get_current_admin)],
 ):
     new_product = ProductModel(**product.model_dump())
 

@@ -5,15 +5,18 @@ from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
 
 from shopapi.core.config import settings
+from shopapi.core.security import hash_password
 from shopapi.db.base import Base
 from shopapi.db.session import get_session
 from shopapi.main import app
-from shopapi.models import CategoryModel, ProductModel
+from shopapi.models import CategoryModel, ProductModel, UserModel
 
 import asyncio
 import sys
 from collections.abc import Callable, Mapping
 import pytest
+
+from shopapi.models.enums import UserRole
 
 """ SelectorEventLoop для Windows """
 def pytest_asyncio_loop_factories(
@@ -21,7 +24,7 @@ def pytest_asyncio_loop_factories(
 ) -> Mapping[str, Callable[[], asyncio.AbstractEventLoop]]:
     if sys.platform == "win32":
         return {"selector": asyncio.SelectorEventLoop}
-    return {}
+    return {"default": asyncio.new_event_loop}
 
 
 
@@ -41,13 +44,14 @@ async def override_get_session():
 async def client():
     app.dependency_overrides[get_session] = override_get_session
 
-    async with AsyncClient(
-        transport=ASGITransport(app=app),
-        base_url="http://test",
-    ) as test_client:
-        yield test_client
-
-    app.dependency_overrides.clear()
+    try:
+        async with AsyncClient(
+            transport=ASGITransport(app=app),
+            base_url="http://test",
+        ) as test_client:
+            yield test_client
+    finally:
+        app.dependency_overrides.clear()
 
 
 @pytest_asyncio.fixture(autouse=True)
@@ -55,15 +59,16 @@ async def prepare_database():
     async with test_engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
-    yield
-
-    async with test_engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
+    try:
+        yield
+    finally:
+        async with test_engine.begin() as conn:
+            await conn.run_sync(Base.metadata.drop_all)
 
 
 
 @pytest_asyncio.fixture
-async def db_session():
+async def db_session(prepare_database):
     async with TestSession() as session:
         yield session
 
@@ -99,3 +104,104 @@ async def product(db_session):
     await db_session.refresh(product)
 
     return product
+
+
+@pytest_asyncio.fixture()
+async def products(db_session):
+    categories = [
+        CategoryModel(
+            name=f"Test category {i}",
+            slug=f"test-category-{i}",
+        ) for i in range(1,4)
+    ]
+
+    db_session.add_all(categories)
+    await db_session.flush()
+
+    specs = [
+        (categories[0], 'Test product 1', '1000.00'), # id = 1 | category_id = 1
+        (categories[1], 'Test product 2', '2000.00'), # id = 2 | category_id = 2
+        (categories[1], 'Test product 3', '3000.00'), # id = 3 | category_id = 2
+        (categories[2], 'Test product 4', '1100.00'), # id = 4 | category_id = 3
+    ]
+
+    products = [
+        ProductModel(
+            category_id=category.id,
+            name=name,
+            description="Product for testing",
+            price=Decimal(price),
+            stock=10,
+            is_active=True,
+        ) for category, name, price in specs
+    ]
+
+    db_session.add_all(products)
+    await db_session.commit()
+
+    return products
+
+
+""" Create user and GET token """
+@pytest_asyncio.fixture()
+async def auth_client(db_session, client):
+    user_info={
+        "email": "test@example.ru",
+        "password": "!TestPassword123",
+        "role": UserRole.USER
+    }
+    user = UserModel(
+        email=user_info["email"],
+        password_hash=hash_password(user_info["password"]),
+        role=user_info["role"]
+    )
+
+    db_session.add(user)
+    await db_session.commit()
+
+    response_log = await client.post(
+        url="/api/v1/auth/login",
+        data={
+            "username": user_info["email"],
+            "password": user_info["password"],
+        }
+    )
+    assert response_log.status_code == 200
+
+    auth_token = response_log.json()["access_token"]
+
+    client.headers["Authorization"] = f"Bearer {auth_token}"
+
+    return client
+
+
+""" Create admin and GET token """
+@pytest_asyncio.fixture()
+async def admin_client(db_session, client):
+    admin_info={
+        "email": "admin@example.ru",
+        "password": "!AdminPassword123",
+        "role": UserRole.ADMIN
+    }
+    admin = UserModel(
+        email=admin_info["email"],
+        password_hash=hash_password(admin_info["password"]),
+        role=admin_info["role"],
+    )
+    db_session.add(admin)
+    await db_session.commit()
+
+    response_log = await client.post(
+        url="/api/v1/auth/login",
+        data={
+            "username": admin_info["email"],
+            "password": admin_info["password"],
+        }
+    )
+    assert response_log.status_code == 200
+
+    auth_token = response_log.json()["access_token"]
+
+    client.headers["Authorization"] = f"Bearer {auth_token}"
+
+    return client

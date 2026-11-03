@@ -2,7 +2,10 @@ import shopapi.models
 import contextlib
 
 from shopapi.api.v1.router import main_router
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import JSONResponse
+from fastapi.exceptions import RequestValidationError
+
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -41,6 +44,19 @@ async def health_check():
     return {"status": "ok"}
 
 
+@app.exception_handler(HTTPException)
+async def http_exception_handler(
+        request: Request,
+        exc: HTTPException
+):
+    return JSONResponse(
+        status_code = exc.status_code,
+        content={
+            "error": True,
+            "status_code": exc.status_code,
+            "detail": exc.detail
+        },
+    )
 
 #
 # @app.post("/create_table")
