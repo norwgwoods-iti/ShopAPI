@@ -177,7 +177,6 @@ async def update_category(
     return category
 
 
-
 @router.delete(
     path="/{category_id}",
     status_code=status.HTTP_204_NO_CONTENT,

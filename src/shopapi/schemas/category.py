@@ -21,3 +21,9 @@ class CategoryCreateSchema(BaseModel):
     slug: str
 
     model_config = ConfigDict(from_attributes=True)
+
+class CategoryUpdateSchema(BaseModel):
+    name: str | None = None
+    slug: str | None = None
+
+    model_config = ConfigDict(from_attributes=True)
