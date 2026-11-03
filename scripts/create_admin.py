@@ -1,3 +1,5 @@
+import sys
+
 import asyncio
 from getpass import getpass
 
@@ -8,6 +10,10 @@ from shopapi.db.session import new_session
 from shopapi.models import UserModel
 from shopapi.models.enums import UserRole
 
+# --- исправление для Windows ---
+if sys.platform == "win32":
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+# -------------------------------
 
 async def create_admin():
     email = input("Admin email: ").strip()
