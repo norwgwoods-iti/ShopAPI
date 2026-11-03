@@ -1,16 +1,16 @@
 from typing import Literal, Annotated
 
 from fastapi import APIRouter, Query, Depends, HTTPException
-from sqlalchemy import select, func
+from sqlalchemy import select, func, delete
 from sqlalchemy.exc import IntegrityError
 from starlette import status
-from starlette.responses import Response
 
 from shopapi.api.v1.endpoints.auth import get_current_user, get_current_admin
 from shopapi.db.session import SessionDep
 from shopapi.models import UserModel
 from shopapi.models.category import CategoryModel
-from shopapi.schemas.category import CategoryResponseSchema, ProductListResponseSchema, CategoryCreateSchema
+from shopapi.schemas.category import CategoryResponseSchema, ProductListResponseSchema, CategoryCreateSchema, \
+    CategoryUpdateSchema
 
 router = APIRouter(
     prefix="/categories",
@@ -20,7 +20,8 @@ router = APIRouter(
 
 @router.get(
     path="/",
-    response_model=ProductListResponseSchema
+    response_model=ProductListResponseSchema,
+    status_code=status.HTTP_200_OK,
 )
 async def get_categories(
         session: SessionDep,
@@ -86,13 +87,12 @@ async def get_category(
     category = await session.get(CategoryModel, category_id)
 
     if not category:
-        return Response(
+        raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            content=f"Category {category_id} not found"
+            detail=f"Category {category_id} not found"
         )
 
     return category
-
 
 
 @router.post(
@@ -131,3 +131,70 @@ async def create_category(
         await session.refresh(new_category)
 
         return new_category
+
+
+@router.patch(
+    path="/{category_id}",
+    response_model=CategoryResponseSchema,
+    status_code=status.HTTP_200_OK,
+)
+async def update_category(
+        session: SessionDep,
+        category_id: int,
+        form_data: CategoryUpdateSchema,
+        current_admin: Annotated[UserModel, Depends(get_current_admin)]
+):
+    category = await session.get(CategoryModel, category_id)
+
+    if not category:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Category {category_id} not found"
+        )
+
+    update_data = form_data.model_dump(exclude_unset=True)
+
+    if not update_data:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No fields provided for update",
+        )
+
+    for field, value in update_data.items():
+        setattr(category, field, value)
+
+    try:
+        await session.commit()
+    except IntegrityError:
+        await session.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"Category '{form_data.name}' already exists"
+        )
+
+    await session.refresh(category)
+
+    return category
+
+
+
+@router.delete(
+    path="/{category_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+async def update_category(
+        session: SessionDep,
+        category_id: int,
+        current_admin: Annotated[UserModel, Depends(get_current_admin)]
+):
+    category = await session.get(CategoryModel, category_id)
+
+    if not category:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Category {category_id} not found"
+        )
+
+    await session.delete(category)
+
+    await session.commit()

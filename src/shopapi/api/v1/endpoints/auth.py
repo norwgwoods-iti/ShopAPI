@@ -19,17 +19,6 @@ router = APIRouter(
     tags=["Auth"],
 )
 
-# async def assertion_email_register(user, session):
-#     query = select(UserModel).where(UserModel.email == user.email)
-#     result = await session.execute(query)
-#     existing_user = result.scalars().first()
-#     if existing_user:
-#         raise HTTPException(
-#             status_code=status.HTTP_400_BAD_REQUEST,
-#             detail="Email already registered",
-#         )
-#     return
-
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/v1/auth/login")
 
 async def get_current_user(
@@ -117,7 +106,6 @@ async def auth_login(
     result = await session.execute(query)
     user = result.scalars().first()
 
-
     if not user or not verify_password(plain_password=form_data.password, hashed_password=user.password_hash):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -141,11 +129,3 @@ async def auth_me(
         current_user: Annotated[UserModel, Depends(get_current_user)],
 ):
     return current_user
-
-"""
-Регистрация по email и паролю.
-Вход и получение JWT access token.
-Хеширование паролей.
-Роли user и admin.
-Запрет доступа к защищённым ресурсам без валидного токена.
-Запрет обычному пользователю изменять чужие данные."""
