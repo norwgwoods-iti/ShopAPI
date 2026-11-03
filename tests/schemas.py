@@ -5,4 +5,6 @@ class StrictProductResponse(ProductResponseSchema):
     model_config = ConfigDict(from_attributes=True, extra='forbid')
 
 class StrictProductListResponse(ProductListResponseSchema):
+    items: list[StrictProductResponse]
+
     model_config = ConfigDict(from_attributes=True, extra='forbid')
