@@ -7,9 +7,10 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from starlette import status
 
-from shopapi.core.config import Settings, settings
+from shopapi.core.config import settings
 from shopapi.core.security import hash_password, verify_password, create_access_token
 from shopapi.db.session import SessionDep
+from shopapi.models.enums import UserRole
 from shopapi.models.user import UserModel
 from shopapi.schemas.auth import AuthResponseSchema, AuthRequestSchema, TokenRequestSchema, TokenResponseSchema
 
@@ -50,11 +51,22 @@ async def get_current_user(
 
     query = select(UserModel).where(UserModel.email == email)
     result = await session.execute(query)
-    user = result.scalars().first()
+    user = result.scalar_one_or_none()
 
     if user is None:
         raise credentials_exception
     return user
+
+
+async def get_current_admin(
+        current_user: Annotated[UserModel, Depends(get_current_user)]
+) -> UserModel:
+    if current_user.role != UserRole.ADMIN:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin access required",
+        )
+    return current_user
 
 
 @router.post(
@@ -72,6 +84,7 @@ async def register_user(
     new_user = UserModel(
         email=user.email,
         password_hash=hashed_pwd,
+        role=UserRole.USER,
     )
 
     session.add(new_user)
@@ -93,6 +106,7 @@ async def register_user(
 @router.post(
     "/login",
     response_model=TokenResponseSchema,
+    status_code=status.HTTP_200_OK,
 )
 async def auth_login(
         session: SessionDep,
