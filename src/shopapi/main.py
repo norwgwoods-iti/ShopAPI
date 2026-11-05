@@ -1,10 +1,8 @@
-import shopapi.models
 import contextlib
 
 from shopapi.api.v1.router import main_router
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
-from fastapi.exceptions import RequestValidationError
 
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
