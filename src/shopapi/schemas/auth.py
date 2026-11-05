@@ -1,7 +1,7 @@
 import re
 
 from fastapi import HTTPException
-from pydantic import BaseModel, ConfigDict, EmailStr, field_validator, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, field_validator
 from starlette import status
 
 
@@ -39,15 +39,12 @@ class AuthRequestSchema(BaseModel):
             return value
 
 
-
-
 class AuthResponseSchema(BaseModel):
     id: int
     email: EmailStr
     role: str
 
     model_config = ConfigDict(from_attributes=True)
-
 
 class TokenRequestSchema(BaseModel):
     email: EmailStr
