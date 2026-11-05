@@ -1,13 +1,12 @@
-from typing import Literal, Annotated
+from typing import Literal
 
-from fastapi import APIRouter, Query, Depends, HTTPException
-from sqlalchemy import select, func, delete
+from fastapi import APIRouter, Query, HTTPException
+from sqlalchemy import select, func
 from sqlalchemy.exc import IntegrityError
 from starlette import status
 
-from shopapi.api.v1.endpoints.auth import get_current_user, get_current_admin
-from shopapi.db.session import SessionDep
-from shopapi.models import UserModel
+from shopapi.core.dependencies import CurrentUserDep, CurrentAdminDep
+from shopapi.core.dependencies import SessionDep
 from shopapi.models.category import CategoryModel
 from shopapi.schemas.category import CategoryResponseSchema, ProductListResponseSchema, CategoryCreateSchema, \
     CategoryUpdateSchema
@@ -25,7 +24,7 @@ router = APIRouter(
 )
 async def get_categories(
         session: SessionDep,
-        current_user: Annotated[UserModel, Depends(get_current_user)],
+        current_user: CurrentUserDep,
         page: int = Query(default=1, ge=1),
         page_size: int = Query(default=20, ge=1, le=100),
         search: str | None = Query(default=None, min_length=1, max_length=100),
@@ -35,7 +34,6 @@ async def get_categories(
 
     query = (
         select(CategoryModel)
-        # .where(CategoryModel.id.is_(not None))
     )
 
     if search is not None:
@@ -80,7 +78,7 @@ async def get_categories(
 )
 async def get_category(
         session: SessionDep,
-        current_user: Annotated[UserModel, Depends(get_current_user)],
+        current_user: CurrentUserDep,
         category_id: int
 ):
 
@@ -103,7 +101,7 @@ async def get_category(
 async def create_category(
         session: SessionDep,
         form_data: CategoryCreateSchema,
-        current_admin: Annotated[UserModel, Depends(get_current_admin)]
+        current_admin: CurrentAdminDep,
 ):
     query = select(CategoryModel).where(CategoryModel.name == form_data.name)
     result = await session.execute(query)
@@ -142,7 +140,7 @@ async def update_category(
         session: SessionDep,
         category_id: int,
         form_data: CategoryUpdateSchema,
-        current_admin: Annotated[UserModel, Depends(get_current_admin)]
+        current_admin: CurrentAdminDep,
 ):
     category = await session.get(CategoryModel, category_id)
     if not category:
@@ -182,7 +180,7 @@ async def update_category(
 async def update_category(
         session: SessionDep,
         category_id: int,
-        current_admin: Annotated[UserModel, Depends(get_current_admin)]
+        current_admin: CurrentAdminDep,
 ):
     category = await session.get(CategoryModel, category_id)
     if not category:
