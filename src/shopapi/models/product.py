@@ -1,11 +1,11 @@
 from datetime import datetime
 from decimal import Decimal
+from typing import Optional
 
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from shopapi.db.base import Base
 from sqlalchemy import String, ForeignKey, Text, CheckConstraint, Numeric, DateTime, func
 
-from typing import Optional
 
 
 class ProductModel(Base):
@@ -45,7 +45,9 @@ class ProductModel(Base):
     )
 
 
-    category: Mapped["CategoryModel"] = relationship(back_populates="products") ###
+    category: Mapped["CategoryModel"] = relationship(
+        back_populates="products"
+    ) ###
     cart_items: Mapped[list["CartModel"]] = relationship(
         back_populates="product",
         cascade="all, delete-orphan"
@@ -53,18 +55,3 @@ class ProductModel(Base):
     # order_items: Mapped[list["OrderItemModel"]] = relationship(
     #     back_populates="product",
     # ) ###
-
-
-
-
-
-"""
-id      	        Integer	        PK
-category_id     	Integer	        FK → categories.id
-name        	    String(200)	    NOT NULL
-description     	Text	        Nullable
-price       	    Numeric(10, 2)	NOT NULL, больше 0
-stock       	    Integer	        NOT NULL, не меньше 0
-is_active       	Boolean	        NOT NULL, default true
-created_at      	DateTime	    NOT NULL
-"""
