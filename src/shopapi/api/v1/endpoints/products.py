@@ -10,7 +10,7 @@ from shopapi.core.dependencies import CurrentUserDep, CurrentAdminDep
 from shopapi.core.dependencies import SessionDep
 from shopapi.models.product import ProductModel
 from shopapi.schemas.product import (ProductResponseSchema, ProductListResponseSchema, ProductCreateSchema,
-                                     ProductUpdateSchema)
+                                     ProductUpdateSchema, ProductStatusUpdateResponseSchema, ProductStatusUpdateSchema)
 
 router = APIRouter(
     prefix="/products",
@@ -206,6 +206,34 @@ async def delete_product(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Product with id='{product_id}' not found",
         )
+    try:
+        await session.delete(product)
+        await session.commit()
+    except IntegrityError as e:
+        await session.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Cannot delete product because it is used in a cart",
+        )from e
 
-    await session.delete(product)
+@router.patch(
+    path="/{product_id}/status",
+    status_code=status.HTTP_200_OK,
+    response_model=ProductStatusUpdateResponseSchema,
+)
+async def switch_product_status(
+        session: SessionDep,
+        product_id: int,
+        form_data: ProductStatusUpdateSchema,
+        current_admin: CurrentAdminDep,
+):
+    product = await session.get(ProductModel, product_id)
+    if not product:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Product with id='{product_id}' not found",
+        )
+    product.is_active = form_data.is_active
     await session.commit()
+
+    return product
