@@ -206,15 +206,8 @@ async def delete_product(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Product with id='{product_id}' not found",
         )
-    try:
-        await session.delete(product)
-        await session.commit()
-    except IntegrityError as e:
-        await session.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="Cannot delete product because it is used in a cart",
-        )from e
+    await session.delete(product)
+    await session.commit()
 
 @router.patch(
     path="/{product_id}/status",
