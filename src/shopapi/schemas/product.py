@@ -22,7 +22,6 @@ class ProductListResponseSchema(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
-
 class ProductCreateSchema(BaseModel):
     name: str
     description: str | None = Field(default="Описание(необязательное поле)")
@@ -36,10 +35,20 @@ class ProductResponseCreateSchema(ProductCreateSchema):
 
     model_config = ConfigDict(from_attributes=True)
 
-
 class ProductUpdateSchema(BaseModel):
     name: str | None = None
     description: str | None = None
     category_id: int | None = None
     price: Decimal | None = None
     stock: int  | None = None
+
+
+class ProductStatusUpdateSchema(BaseModel):
+    is_active: bool
+
+class ProductStatusUpdateResponseSchema(BaseModel):
+    id: int
+    name: str
+    is_active: bool
+
+    model_config = ConfigDict(from_attributes=True)
