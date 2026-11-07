@@ -45,7 +45,9 @@ async def register_user(
         await session.rollback()
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Email already registered"
+            detail={
+                "message": "Email already registered"
+            }
         )
 
     return new_user
@@ -68,8 +70,10 @@ async def auth_login(
     if not user or not verify_password(plain_password=form_data.password, hashed_password=user.password_hash):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect username or password",
             headers={"WWW-Authenticate": "Bearer"},
+            detail={
+                "message": "Incorrect username or password",
+            }
         )
 
     access_token = create_access_token(data={"sub" : user.email})

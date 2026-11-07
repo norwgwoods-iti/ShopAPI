@@ -33,7 +33,6 @@ async def get_product(
             status_code=status.HTTP_404_NOT_FOUND,
             detail={
                 "message": f"Product with id='{product_id}' not found",
-                "product_id": product_id,
             }
         )
 
@@ -143,7 +142,9 @@ async def create_product(
         await session.rollback()
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail="Product violates integrity constraints",
+            detail={
+               "message": "Product violates integrity constraints",
+            }
         ) from e
 
     await session.refresh(new_product)
@@ -164,7 +165,9 @@ async def update_product(
     if not product:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Product with id='{product_id}' not found",
+            detail={
+                "message": f"Product with id='{product_id}' not found",
+            }
         )
 
     update_data = form_data.model_dump(exclude_unset=True)
@@ -172,7 +175,9 @@ async def update_product(
     if not update_data:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="No fields provided for update",
+            detail={
+                "message": "No fields provided for update",
+            }
         )
 
     for field, value in update_data.items():
@@ -184,7 +189,9 @@ async def update_product(
         await session.rollback()
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail=f"Product with name='{form_data.name}' already exists"
+            detail={
+                "message": f"Product with name='{form_data.name}' was not updated",
+            }
         ) from e
 
     await session.refresh(product)
@@ -204,7 +211,9 @@ async def delete_product(
     if not product:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Product with id='{product_id}' not found",
+            detail={
+                "message": f"Product with id='{product_id}' not found",
+            }
         )
     await session.delete(product)
     await session.commit()
@@ -224,7 +233,9 @@ async def switch_product_status(
     if not product:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Product with id='{product_id}' not found",
+            detail={
+                "message": f"Product with id='{product_id}' not found",
+            }
         )
     product.is_active = form_data.is_active
     await session.commit()
