@@ -8,7 +8,7 @@ from tests.utils import parse_product, parse_error_detail
 
 base_path = "/api/v1/products"
 
-@pytest.mark.products
+@pytest.mark.get_products
 @pytest.mark.asyncio
 async def test_get_products_contract(auth_client, products):
     response = await auth_client.get(
@@ -17,7 +17,8 @@ async def test_get_products_contract(auth_client, products):
 
     parsed = parse_product(
         response=response,
-        schema=StrictProductListResponse
+        schema=StrictProductListResponse,
+        status_code=200
     )
 
     assert isinstance(parsed.total, int)
@@ -39,7 +40,7 @@ async def test_get_products_contract(auth_client, products):
         assert item.price.as_tuple().exponent == -2
 
 
-@pytest.mark.products
+@pytest.mark.get_products
 @pytest.mark.asyncio
 async def test_get_product_success(auth_client, product):
     response = await auth_client.get(
@@ -48,7 +49,8 @@ async def test_get_product_success(auth_client, product):
 
     parsed = parse_product(
         response=response,
-        schema=StrictProductListResponse
+        schema=StrictProductListResponse,
+        status_code=200
     )
 
     assert parsed.total == 1
@@ -70,7 +72,7 @@ async def test_get_product_success(auth_client, product):
     assert parsed_item.created_at.tzinfo is not None
 
 
-@pytest.mark.products
+@pytest.mark.get_products
 @pytest.mark.asyncio
 async def test_get_products_success(auth_client, products):
     response = await auth_client.get(
@@ -79,7 +81,8 @@ async def test_get_products_success(auth_client, products):
 
     parsed = parse_product(
         response=response,
-        schema=StrictProductListResponse
+        schema=StrictProductListResponse,
+        status_code=200
     )
 
     assert parsed.total == len(products)
@@ -102,7 +105,7 @@ async def test_get_products_success(auth_client, products):
     assert parsed_item.created_at.tzinfo is not None
 
 
-@pytest.mark.products
+@pytest.mark.get_products
 @pytest.mark.asyncio
 async def test_get_products_filter_empty_page(auth_client, product):
 
@@ -115,7 +118,8 @@ async def test_get_products_filter_empty_page(auth_client, product):
 
     parsed = parse_product(
         response=response,
-        schema=StrictProductListResponse
+        schema=StrictProductListResponse,
+        status_code=200
     )
 
     query_page = response.request.url.params.get("page")
@@ -125,7 +129,7 @@ async def test_get_products_filter_empty_page(auth_client, product):
     assert parsed.page_size == 20
     assert parsed.items == []
 
-@pytest.mark.products
+@pytest.mark.get_products
 @pytest.mark.asyncio
 async def test_get_products_filter_page_size(auth_client, products):
     response = await auth_client.get(
@@ -137,7 +141,8 @@ async def test_get_products_filter_page_size(auth_client, products):
 
     parsed = parse_product(
         response=response,
-        schema=StrictProductListResponse
+        schema=StrictProductListResponse,
+        status_code=200
     )
 
     query_page_size = int(response.request.url.params.get("page_size"))
@@ -151,7 +156,7 @@ async def test_get_products_filter_page_size(auth_client, products):
         assert len(parsed.items) == len(products)
 
 
-@pytest.mark.products
+@pytest.mark.get_products
 @pytest.mark.asyncio
 async def test_get_products_filter_category_id(auth_client, products):
 
@@ -166,7 +171,8 @@ async def test_get_products_filter_category_id(auth_client, products):
 
     parsed = parse_product(
         response=response,
-        schema=StrictProductListResponse
+        schema=StrictProductListResponse,
+        status_code=200
        )
 
     query_category_id = int(response.request.url.params.get("category_id"))
@@ -184,7 +190,7 @@ async def test_get_products_filter_category_id(auth_client, products):
         assert len(parsed.items) == len(expected_ids)
 
 
-@pytest.mark.products
+@pytest.mark.get_products
 @pytest.mark.asyncio
 async def test_get_products_filter_min_price(auth_client, products):
     response = await auth_client.get(
@@ -196,7 +202,8 @@ async def test_get_products_filter_min_price(auth_client, products):
 
     parsed = parse_product(
         response=response,
-        schema=StrictProductListResponse
+        schema=StrictProductListResponse,
+        status_code=200
     )
 
     query_min_price = Decimal(response.request.url.params.get("min_price"))
@@ -214,7 +221,7 @@ async def test_get_products_filter_min_price(auth_client, products):
         assert len(parsed.items) == len(expected_ids)
 
 
-@pytest.mark.products
+@pytest.mark.get_products
 @pytest.mark.asyncio
 async def test_get_products_filter_max_price(auth_client, products):
     response = await auth_client.get(
@@ -226,7 +233,8 @@ async def test_get_products_filter_max_price(auth_client, products):
 
     parsed = parse_product(
         response=response,
-        schema=StrictProductListResponse
+        schema=StrictProductListResponse,
+        status_code=200
     )
 
     query_max_price = Decimal(response.request.url.params.get("max_price"))
@@ -243,7 +251,7 @@ async def test_get_products_filter_max_price(auth_client, products):
     else:
         assert len(parsed.items) == len(expected_ids)
 
-@pytest.mark.products
+@pytest.mark.get_products
 @pytest.mark.asyncio
 async def test_get_products_filter_min_max_price(auth_client, products):
     response = await auth_client.get(
@@ -256,7 +264,8 @@ async def test_get_products_filter_min_max_price(auth_client, products):
 
     parsed = parse_product(
         response=response,
-        schema=StrictProductListResponse
+        schema=StrictProductListResponse,
+        status_code=200
     )
 
     query_params = response.request.url.params
@@ -276,7 +285,7 @@ async def test_get_products_filter_min_max_price(auth_client, products):
     else:
         assert len(parsed.items) == len(expected_ids)
 
-@pytest.mark.products
+@pytest.mark.get_products
 @pytest.mark.asyncio
 async def test_get_products_filter_search(auth_client, products):
     response = await auth_client.get(
@@ -288,7 +297,8 @@ async def test_get_products_filter_search(auth_client, products):
 
     parsed = parse_product(
         response=response,
-        schema=StrictProductListResponse
+        schema=StrictProductListResponse,
+        status_code=200
     )
 
     query_search = str(response.request.url.params.get("search"))
@@ -305,7 +315,7 @@ async def test_get_products_filter_search(auth_client, products):
     else:
         assert len(parsed.items) == len(expected_ids)
 
-@pytest.mark.products
+@pytest.mark.get_products
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
     "sort_by, order",
@@ -326,7 +336,8 @@ async def test_get_products_sorting(auth_client, products, sort_by, order):
 
     parsed = parse_product(
         response=response,
-        schema=StrictProductListResponse
+        schema=StrictProductListResponse,
+        status_code=200
     )
 
     assert parsed.total == len(products)
@@ -350,7 +361,7 @@ async def test_get_products_sorting(auth_client, products, sort_by, order):
 
     assert actual_ids == expected_ids
 
-@pytest.mark.products
+@pytest.mark.get_products
 @pytest.mark.negative
 async def test_get_product_filter_page_bellow_border(auth_client):
     response = await auth_client.get(
@@ -362,7 +373,7 @@ async def test_get_product_filter_page_bellow_border(auth_client):
 
     assert response.status_code == 422
 
-@pytest.mark.products
+@pytest.mark.get_products
 @pytest.mark.negative
 async def test_get_product_filter_invalid_page(auth_client):
     response = await auth_client.get(
@@ -374,7 +385,7 @@ async def test_get_product_filter_invalid_page(auth_client):
 
     assert response.status_code == 422
 
-@pytest.mark.products
+@pytest.mark.get_products
 @pytest.mark.negative
 async def test_get_product_filter_page_size_bellow_border(auth_client):
     response = await auth_client.get(
@@ -386,7 +397,7 @@ async def test_get_product_filter_page_size_bellow_border(auth_client):
 
     assert response.status_code == 422
 
-@pytest.mark.products
+@pytest.mark.get_products
 @pytest.mark.asyncio
 async def test_get_product_filter_page_size_on_border(auth_client, products):
     response = await auth_client.get(
@@ -398,7 +409,8 @@ async def test_get_product_filter_page_size_on_border(auth_client, products):
 
     parsed = parse_product(
         response=response,
-        schema=StrictProductListResponse
+        schema=StrictProductListResponse,
+        status_code=200
     )
 
     query_page_size = int(response.request.url.params.get("page_size"))
@@ -411,7 +423,7 @@ async def test_get_product_filter_page_size_on_border(auth_client, products):
     else:
         assert len(parsed.items) == len(products)
 
-@pytest.mark.products
+@pytest.mark.get_products
 @pytest.mark.negative
 async def test_get_product_filter_page_size_above_border(auth_client):
     response = await auth_client.get(
@@ -423,7 +435,7 @@ async def test_get_product_filter_page_size_above_border(auth_client):
 
     assert response.status_code == 422
 
-@pytest.mark.products
+@pytest.mark.get_products
 @pytest.mark.negative
 async def test_get_product_filter_invalid_page_size(auth_client):
     response = await auth_client.get(
@@ -435,7 +447,7 @@ async def test_get_product_filter_invalid_page_size(auth_client):
 
     assert response.status_code == 422
 
-@pytest.mark.products
+@pytest.mark.get_products
 @pytest.mark.negative
 async def test_get_product_filter_category_id_bellow_border(auth_client):
     response = await auth_client.get(
@@ -447,7 +459,7 @@ async def test_get_product_filter_category_id_bellow_border(auth_client):
 
     assert response.status_code == 422
 
-@pytest.mark.products
+@pytest.mark.get_products
 @pytest.mark.negative
 async def test_get_product_filter_invalid_category_id(auth_client):
     response = await auth_client.get(
@@ -459,7 +471,7 @@ async def test_get_product_filter_invalid_category_id(auth_client):
 
     assert response.status_code == 422
 
-@pytest.mark.products
+@pytest.mark.get_products
 @pytest.mark.negative
 async def test_get_product_filter_min_price_bellow_border(auth_client):
     response = await auth_client.get(
@@ -471,7 +483,7 @@ async def test_get_product_filter_min_price_bellow_border(auth_client):
 
     assert response.status_code == 422
 
-@pytest.mark.products
+@pytest.mark.get_products
 @pytest.mark.asyncio
 async def test_get_product_filter_min_price_on_border(auth_client, products):
     response = await auth_client.get(
@@ -483,7 +495,8 @@ async def test_get_product_filter_min_price_on_border(auth_client, products):
 
     parsed = parse_product(
         response=response,
-        schema=StrictProductListResponse
+        schema=StrictProductListResponse,
+        status_code=200
     )
 
     query_min_price = Decimal(response.request.url.params.get("min_price"))
@@ -500,7 +513,7 @@ async def test_get_product_filter_min_price_on_border(auth_client, products):
     else:
         assert len(parsed.items) == len(expected_ids)
 
-@pytest.mark.products
+@pytest.mark.get_products
 @pytest.mark.asyncio
 async def test_get_product_filter_invalid_min_price(auth_client):
     response = await auth_client.get(
@@ -512,7 +525,7 @@ async def test_get_product_filter_invalid_min_price(auth_client):
 
     assert response.status_code == 422
 
-@pytest.mark.products
+@pytest.mark.get_products
 @pytest.mark.negative
 async def test_get_product_incorrect_max_price_bellow_border(auth_client):
     response = await auth_client.get(
@@ -524,7 +537,7 @@ async def test_get_product_incorrect_max_price_bellow_border(auth_client):
 
     assert response.status_code == 422
 
-@pytest.mark.products
+@pytest.mark.get_products
 @pytest.mark.asyncio
 async def test_get_product_incorrect_max_price_on_border(auth_client, products):
     response = await auth_client.get(
@@ -536,7 +549,8 @@ async def test_get_product_incorrect_max_price_on_border(auth_client, products):
 
     parsed = parse_product(
         response=response,
-        schema=StrictProductListResponse
+        schema=StrictProductListResponse,
+        status_code=200
     )
 
     query_max_price = Decimal(response.request.url.params.get("max_price"))
@@ -553,7 +567,7 @@ async def test_get_product_incorrect_max_price_on_border(auth_client, products):
     else:
         assert len(parsed.items) == len(expected_ids)
 
-@pytest.mark.products
+@pytest.mark.get_products
 @pytest.mark.asyncio
 async def test_get_product_filter_invalid_max_price(auth_client):
     response = await auth_client.get(
@@ -565,7 +579,7 @@ async def test_get_product_filter_invalid_max_price(auth_client):
 
     assert response.status_code == 422
 
-@pytest.mark.products
+@pytest.mark.get_products
 @pytest.mark.negative
 async def test_get_product_filter_min_more_max(auth_client):
     response = await auth_client.get(
@@ -581,12 +595,12 @@ async def test_get_product_filter_min_more_max(auth_client):
 
     payload = response.json()
 
-    detail = parse_error_detail(payload=payload, response=response)
+    detail = parse_error_detail(response=response)
 
     assert detail["message"] == "The minimum price must be less than the maximum price"
 
 
-@pytest.mark.products
+@pytest.mark.get_products
 @pytest.mark.negative
 async def test_get_product_filter_search_bellow_lower_border(auth_client):
     response = await auth_client.get(
@@ -598,7 +612,7 @@ async def test_get_product_filter_search_bellow_lower_border(auth_client):
 
     assert response.status_code == 422
 
-@pytest.mark.products
+@pytest.mark.get_products
 @pytest.mark.negative
 async def test_get_product_filter_search_on_lower_border(auth_client, products):
     response = await auth_client.get(
@@ -610,7 +624,8 @@ async def test_get_product_filter_search_on_lower_border(auth_client, products):
 
     parsed = parse_product(
         response=response,
-        schema=StrictProductListResponse
+        schema=StrictProductListResponse,
+        status_code=200
     )
 
     query_search = str(response.request.url.params.get("search"))
@@ -627,7 +642,7 @@ async def test_get_product_filter_search_on_lower_border(auth_client, products):
     else:
         assert len(parsed.items) == len(expected_ids)
 
-@pytest.mark.products
+@pytest.mark.get_products
 @pytest.mark.asyncio
 async def test_get_product_filter_search_on_upper_border(auth_client, products   ):
     response = await auth_client.get(
@@ -639,7 +654,8 @@ async def test_get_product_filter_search_on_upper_border(auth_client, products  
 
     parsed = parse_product(
         response=response,
-        schema=StrictProductListResponse
+        schema=StrictProductListResponse,
+        status_code=200
     )
 
     query_search = str(response.request.url.params.get("search"))
@@ -656,7 +672,7 @@ async def test_get_product_filter_search_on_upper_border(auth_client, products  
     else:
         assert len(parsed.items) == len(expected_ids)
 
-@pytest.mark.products
+@pytest.mark.get_products
 @pytest.mark.negative
 async def test_get_product_filter_search_above_upper_border(auth_client):
     response = await auth_client.get(
@@ -668,7 +684,7 @@ async def test_get_product_filter_search_above_upper_border(auth_client):
     assert response.status_code == 422
 
 
-@pytest.mark.products
+@pytest.mark.get_products
 @pytest.mark.negative
 async def test_get_product_filter_invalid_sort_by(auth_client):
     response = await auth_client.get(
@@ -679,7 +695,7 @@ async def test_get_product_filter_invalid_sort_by(auth_client):
     )
     assert response.status_code == 422
 
-@pytest.mark.products
+@pytest.mark.get_products
 @pytest.mark.negative
 async def test_get_product_filter_invalid_order(auth_client):
     response = await auth_client.get(
