@@ -43,9 +43,10 @@ testpaths = ["tests"]
 asyncio_mode = "auto"
 markers= [
     "negative: negative test",
-    "products: get products",
-    "product_id: get id product",
-    "post_product: post product"
+    "get_products: get products",
+    "get_product_id: get id product",
+    "post_product: post product",
+    "update_product: update product"
 ]
 
 
