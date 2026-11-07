@@ -24,8 +24,10 @@ async def get_current_user(
 ) -> UserModel:
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate token",
         headers={"WWW-Authenticate": "Bearer"},
+        detail={
+            "message": "Could not validate token"
+        },
     )
     try:
         payload = jwt.decode(token, settings.secret_key, algorithms=[settings.algorithm])
@@ -53,7 +55,9 @@ async def get_current_admin(
     if current_user.role != UserRole.ADMIN:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Admin access required",
+            detail={
+                "message": "Admin access required"
+            },
         )
     return current_user
 
