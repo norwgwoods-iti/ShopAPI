@@ -81,9 +81,22 @@ async def dispose_test_engine():
     yield
     await test_engine.dispose()
 
+# @pytest_asyncio.fixture()
+# async def category(db_session):
+#     category = CategoryModel(
+#         name="Test category",
+#         slug="test-category",
+#     )
+#     db_session.add(category)
+#     await db_session.commit()
+#
+#     return category
+
 
 @pytest_asyncio.fixture()
-async def product(db_session):
+async def product(
+        db_session,
+):
     category = CategoryModel(
         name="Test category",
         slug="test-category",
@@ -105,6 +118,15 @@ async def product(db_session):
 
     return product
 
+@pytest_asyncio.fixture()
+async def product_hide(
+        db_session,
+        product,
+):
+    setattr(product, "is_active", False)
+    await db_session.commit()
+
+    return product
 
 @pytest_asyncio.fixture()
 async def products(db_session):
