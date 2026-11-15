@@ -46,7 +46,8 @@ markers= [
     "get_products: get products",
     "get_product_id: get id product",
     "post_product: post product",
-    "update_product: update product"
+    "update_product: update product",
+    "update_product_status: update product status"
 ]
 
 
