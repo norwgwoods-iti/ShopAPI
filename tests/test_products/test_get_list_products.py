@@ -37,7 +37,34 @@ async def test_get_products_contract(auth_client, products):
         assert isinstance(item.created_at, datetime)
 
         assert item.created_at.tzinfo is not None
+
+@pytest.mark.get_products
+@pytest.mark.asyncio
+async def test_get_products_price_keeps_two_decimals(auth_client, products):
+    response = await auth_client.get(
+        url=f"{base_path}/",
+    )
+    parsed = parse_product(
+        response=response,
+        schema=StrictProductListResponse,
+        status_code=200
+    )
+    for item in parsed.items:
+
         assert item.price.as_tuple().exponent == -2
+
+
+@pytest.mark.update_product
+async def test_get_product_datetime_is_aware(auth_client, products):
+    response = await auth_client.get(
+        url=f"{base_path}/",
+    )
+    parsed = parse_product(
+        response=response,
+        schema=StrictProductListResponse,
+        status_code=200
+    )
+    assert parsed.created_at.tzinfo is not None
 
 
 @pytest.mark.get_products
@@ -589,13 +616,10 @@ async def test_get_product_filter_min_more_max(auth_client):
             "max_price": 2000
         }
     )
-
-    assert response.status_code == 422
-    assert response.headers["Content-Type"].startswith("application/json")
-
-    payload = response.json()
-
-    detail = parse_error_detail(response=response)
+    detail = parse_error_detail(
+        response=response,
+        expected_status_code=422
+    )
 
     assert detail["message"] == "The minimum price must be less than the maximum price"
 
@@ -705,6 +729,33 @@ async def test_get_product_filter_invalid_order(auth_client):
         }
     )
     assert response.status_code == 422
+
+@pytest.mark.get_products
+@pytest.mark.negative
+async def test_get_product_no_token(client, products):
+    response = await client.get(
+        url=f"{base_path}/",
+    )
+    detail = parse_error_detail(
+        response=response,
+        expected_status_code=401
+    )
+    assert detail == "Not authenticated"
+
+@pytest.mark.get_products
+@pytest.mark.negative
+async def test_get_product_invalid_token(client, products):
+    response = await client.get(
+        url=f"{base_path}/",
+        headers={
+            "Authorization": "invalid-token",
+        }
+    )
+    detail = parse_error_detail(
+        response=response,
+        expected_status_code=401
+    )
+    assert detail == "Not authenticated"
 
 """
 Пагинация	Проверку второй страницы, когда на ней есть товары
