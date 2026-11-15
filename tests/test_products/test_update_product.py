@@ -140,9 +140,10 @@ async def test_update_product_incorrect_id(admin_client, products):
             "name": "Test Update Product",
         }
     )
-    assert response.status_code == 404
-
-    detail = parse_error_detail(response=response)
+    detail = parse_error_detail(
+        response=response,
+        expected_status_code=404,
+    )
     assert detail["message"] == f"Product with id='{product_id}' not found"
 
 @pytest.mark.update_product
@@ -162,7 +163,7 @@ async def test_update_product_empty_data(admin_client, products):
 
 @pytest.mark.update_product
 @pytest.mark.negative
-async def test_update_product_with_user_token(auth_client, products):
+async def test_update_product_no_admin_token(auth_client, products):
     product = products[0]
     response = await auth_client.patch(
         url=f"{base_path}/{product.id}",
@@ -172,20 +173,4 @@ async def test_update_product_with_user_token(auth_client, products):
         response=response,
         expected_status_code=403,
     )
-    assert detail["message"] == "No fields provided for update"
-
-# @pytest.mark.update_product
-# @pytest.mark.negative
-# async def test_update_product_exist_name(admin_client, products):
-#     product = products[0]
-#     response = await admin_client.patch(
-#         url=f"{base_path}/{product.id}",
-#         json={
-#             "name": products[1].name,
-#         }
-#     )
-#     detail = parse_error_detail(
-#         response=response,
-#         expected_status_code=409,
-#     )
-#     assert detail["message"] == f"Product with name='{product[0].name}' was not updated"
+    assert detail["message"] == "Admin access required"
