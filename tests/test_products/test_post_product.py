@@ -29,6 +29,7 @@ async def test_post_product(admin_client, db_session):
 
     assert response.status_code == 201
 
-    response_json = response.json()
-
-    print(response_json)
+    # TODO: доделать проверки полей
+    # response_json = response.json()
+    #
+    # print(response_json)
