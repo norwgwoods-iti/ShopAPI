@@ -378,6 +378,10 @@ async def test_get_products_filter_search(auth_client, products):
     ]
 )
 async def test_get_products_sorting(auth_client, products, sort_by, order):
+    query_params = {
+        "sort_by": sort_by,
+        "order": order,
+    }
     response = await auth_client.get(
         url=f"{base_path}/",
         params={
