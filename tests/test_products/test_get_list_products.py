@@ -181,6 +181,35 @@ async def test_get_products_filter_page_size(auth_client, products):
 
 @pytest.mark.get_products
 @pytest.mark.asyncio
+async def test_get_products_filter_page_have_product(auth_client, products):
+    response = await auth_client.get(
+        url=f"{base_path}/",
+        params={
+            "page": 2,
+            "page_size": 2,
+        }
+    )
+    parsed = parse_product(
+        response=response,
+        schema=StrictProductListResponse,
+        status_code=200
+    )
+    query_params = response.request.url.params
+    query_page = int(query_params.get("page"))
+    query_page_size = int(query_params.get("page_size"))
+
+    assert parsed.total == len(products)
+    assert parsed.page == query_page
+    assert parsed.page_size == query_page_size
+
+    if parsed.total >= query_page_size:
+        assert len(parsed.items) == query_page_size
+    else:
+        assert len(parsed.items) == len(products)
+
+
+@pytest.mark.get_products
+@pytest.mark.asyncio
 async def test_get_products_filter_category_id(auth_client, products):
 
     expend_category_id = products[1].category_id
