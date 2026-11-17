@@ -623,7 +623,11 @@ async def test_get_product_filter_invalid_max_price(auth_client):
 
 @pytest.mark.get_products
 @pytest.mark.negative
-async def test_get_product_filter_min_more_max(auth_client):
+async def test_get_product_filter_min_more_max_price(auth_client):
+    query_params={
+        "min_price": 3000.00,
+        "max_price": 2000.00
+    }
     response = await auth_client.get(
         url=f"{base_path}/",
         params={
