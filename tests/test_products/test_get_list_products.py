@@ -64,7 +64,8 @@ async def test_get_product_datetime_is_aware(auth_client, products):
         schema=StrictProductListResponse,
         status_code=200
     )
-    assert parsed.created_at.tzinfo is not None
+    for item in parsed.items:
+        assert item.created_at.tzinfo is not None
 
 
 @pytest.mark.get_products
