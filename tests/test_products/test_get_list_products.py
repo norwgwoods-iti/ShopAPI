@@ -646,8 +646,8 @@ async def test_get_product_filter_min_more_max_price(auth_client):
 @pytest.mark.asyncio
 async def test_get_product_filter_min_equal_max_price(auth_client, products):
     query_params={
-        "min_price": 2000,
-        "max_price": 2000
+        "min_price": 2000.00,
+        "max_price": 2000.00
     }
     response = await auth_client.get(
         url=f"{base_path}/",
