@@ -182,6 +182,10 @@ async def test_get_products_filter_page_size(auth_client, products):
 @pytest.mark.get_products
 @pytest.mark.asyncio
 async def test_get_products_filter_page_have_product(auth_client, products):
+    query_params = {
+        "page": 2,
+        "page_size": 2,
+    }
     response = await auth_client.get(
         url=f"{base_path}/",
         params={
