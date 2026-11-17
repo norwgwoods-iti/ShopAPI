@@ -28,6 +28,7 @@ async def test_get_product_response_type(auth_client, product):
     assert isinstance(parsed.is_active, bool)
     assert isinstance(parsed.created_at, datetime)
 
+
 @pytest.mark.get_product_id
 async def test_get_product_price_keeps_two_decimals(auth_client, product):
     response = await auth_client.get(
@@ -40,6 +41,7 @@ async def test_get_product_price_keeps_two_decimals(auth_client, product):
     )
     assert parsed.price.as_tuple().exponent == -2
 
+
 @pytest.mark.get_product_id
 async def test_get_product_datetime_is_aware(auth_client, product):
     response = await auth_client.get(
@@ -51,6 +53,7 @@ async def test_get_product_datetime_is_aware(auth_client, product):
         status_code=200
     )
     assert parsed.created_at.tzinfo is not None
+
 
 @pytest.mark.get_product_id
 @pytest.mark.asyncio
@@ -89,6 +92,7 @@ async def test_get_product_incorrect_id(auth_client, product):
         expected_status_code=404,
     )
     assert detail["message"] == f"Product with id='{product_id}' not found"
+
 
 @pytest.mark.get_product_id
 @pytest.mark.negative
