@@ -1,5 +1,6 @@
 from decimal import Decimal
 from typing import Any
+from urllib import response
 
 from httpx import AsyncClient
 
@@ -21,6 +22,7 @@ def parse_product(
 
     return parsed
 
+
 def parse_error_detail(
         response,
         expected_status_code
@@ -36,6 +38,25 @@ def parse_error_detail(
     detail = payload["detail"]
 
     return detail
+
+
+def parse_system_error_detail(
+        *,
+        response,
+        expected_status_code,
+        message_error: str,
+        input_value: str
+):
+    assert response.status_code == expected_status_code
+    assert response.headers["Content-Type"].startswith("application/json")
+
+    payload = response.json()
+    assert "detail" in payload
+
+    detail = payload["detail"][0]
+    assert detail["msg"] == message_error
+    assert detail["input"] == input_value
+
 
 async def patch_and_parse(
         admin_client: AsyncClient,
@@ -59,3 +80,4 @@ async def patch_and_parse(
         schema=schema,
         status_code=status_code
     )
+
