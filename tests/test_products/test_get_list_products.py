@@ -626,7 +626,24 @@ async def test_get_product_filter_min_more_max(auth_client):
     assert detail["message"] == "The minimum price must be less than the maximum price"
 
 
-# TODO: min_price == max_price
+@pytest.mark.get_products
+@pytest.mark.asyncio
+async def test_get_product_filter_min_equal_max_price(auth_client, products):
+    query_params={
+        "min_price": 2000,
+        "max_price": 2000
+    }
+    response = await auth_client.get(
+        url=f"{base_path}/",
+        params=query_params
+    )
+    parsed = parse_product(
+        response=response,
+        schema=StrictProductListResponse,
+        status_code=200
+    )
+    expected_ids = [p.id for p in products if p.price == query_params["min_price"] and p.price == query_params["max_price"]]
+    actual_ids = [item.id for item in parsed.items]
 
 
 
