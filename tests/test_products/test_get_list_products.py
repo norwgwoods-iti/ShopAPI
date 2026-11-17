@@ -247,6 +247,27 @@ async def test_get_products_filter_incorrect_category_id(auth_client, products):
     )
     for item in parsed.items:
         assert item is None
+
+
+@pytest.mark.get_products
+@pytest.mark.negative
+async def test_get_products_filter_invalid_category_id(auth_client, products):
+    response = await auth_client.get(
+        url=f"{base_path}/",
+        params={
+            "category_id": "invalid_category_id"
+        }
+    )
+    query_category_id = str(response.request.url.params.get("category_id"))
+
+    parse_system_error_detail(
+        response=response,
+        expected_status_code=422,
+        message_error="Input should be a valid integer, unable to parse string as an integer",
+        input_value=query_category_id
+    )
+
+
 @pytest.mark.get_products
 @pytest.mark.asyncio
 async def test_get_products_filter_min_price(auth_client, products):
