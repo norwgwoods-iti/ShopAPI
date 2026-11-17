@@ -134,7 +134,7 @@ async def products(db_session):
         CategoryModel(
             name=f"Test category {i}",
             slug=f"test-category-{i}",
-        ) for i in range(1,4)
+        ) for i in range(1,5)
     ]
 
     db_session.add_all(categories)
