@@ -4,7 +4,7 @@ from decimal import Decimal
 import pytest
 
 from tests.schemas import StrictProductListResponse
-from tests.utils import parse_product, parse_error_detail
+from tests.utils import parse_product, parse_error_detail, parse_system_error_detail
 
 base_path = "/api/v1/products"
 
@@ -70,13 +70,11 @@ async def test_get_product_success(auth_client, product):
     response = await auth_client.get(
         url=f"{base_path}/",
     )
-
     parsed = parse_product(
         response=response,
         schema=StrictProductListResponse,
         status_code=200
     )
-
     assert parsed.total == 1
     assert parsed.page == 1
     assert parsed.page_size == 20
@@ -233,6 +231,22 @@ async def test_get_products_filter_category_id(auth_client, products):
         assert len(parsed.items) == len(expected_ids)
 
 
+@pytest.mark.get_products
+@pytest.mark.negative
+async def test_get_products_filter_incorrect_category_id(auth_client, products):
+    response = await auth_client.get(
+        url=f"{base_path}/",
+        params={
+            "category_id": 9999999
+        }
+    )
+    parsed = parse_product(
+        response=response,
+        schema=StrictProductListResponse,
+        status_code=200
+    )
+    for item in parsed.items:
+        assert item is None
 @pytest.mark.get_products
 @pytest.mark.asyncio
 async def test_get_products_filter_min_price(auth_client, products):
