@@ -269,6 +269,25 @@ async def test_get_products_filter_invalid_category_id(auth_client, products):
 
 
 @pytest.mark.get_products
+@pytest.mark.negative
+async def test_get_products_filter_category_id_bellow_border(auth_client, products):
+    response = await auth_client.get(
+        url=f"{base_path}/",
+        params={
+            "category_id": 0
+        }
+    )
+    query_category_id = str(response.request.url.params.get("category_id"))
+
+    parse_system_error_detail(
+        response=response,
+        expected_status_code=422,
+        message_error="Input should be greater than or equal to 1",
+        input_value=query_category_id
+    )
+
+
+@pytest.mark.get_products
 @pytest.mark.asyncio
 async def test_get_products_filter_min_price(auth_client, products):
     response = await auth_client.get(
