@@ -145,6 +145,7 @@ async def products(db_session):
         (categories[1], 'Test product 2', '2000.00'), # id = 2 | category_id = 2
         (categories[1], 'Test product 3', '3000.00'), # id = 3 | category_id = 2
         (categories[2], 'Test product 4', '1100.00'), # id = 4 | category_id = 3
+        (categories[3], 'Test product 5', '6700.23'), # id = 4 | category_id = 3
     ]
 
     products = [
