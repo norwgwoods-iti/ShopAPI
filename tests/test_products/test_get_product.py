@@ -102,6 +102,8 @@ async def test_get_product_invalid_id(auth_client, product):
     assert response.headers["Content-Type"].startswith("application/json")
     assert "detail" in response.json()
 
+
+""" Authorization Check """
 @pytest.mark.negative
 async def test_get_product_no_token(client, product):
     response = await client.get(
@@ -112,6 +114,7 @@ async def test_get_product_no_token(client, product):
         expected_status_code=401
     )
     assert detail == "Not authenticated"
+
 
 @pytest.mark.get_product_id
 @pytest.mark.negative
