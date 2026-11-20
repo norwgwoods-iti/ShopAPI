@@ -431,7 +431,11 @@ async def test_get_products_filter_min_max_price(
     query_min_price = Decimal(query_params.get("min_price"))
     query_max_price = Decimal(query_params.get("max_price"))
 
-    expected_ids = [p.id for p in products if p.price >= query_min_price and p.price <= query_max_price]
+    expected_ids = [
+        p.id for p in products
+        if p.price >= query_min_price
+           and p.price <= query_max_price
+    ]
     actual_ids = [item.id for item in parsed.items]
     assert set(actual_ids) == set(expected_ids)
 
@@ -730,9 +734,7 @@ async def test_get_product_filter_min_more_max_price(auth_client):
     parse_error_detail(
         response=response,
         expected_status_code=422,
-        message_error={
-            "message": "The minimum price must be less than the maximum price"
-        }
+        message_error="The minimum price must be less than the maximum price"
     )
 
 

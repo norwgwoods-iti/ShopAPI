@@ -165,7 +165,5 @@ async def test_update_status_with_user_token(
     parse_error_detail(
         response=response,
         expected_status_code=403,
-        message_error={
-            "message": "Admin access required"
-        }
+        message_error="Admin access required"
     )

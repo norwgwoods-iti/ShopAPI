@@ -87,11 +87,11 @@ async def test_get_product_incorrect_id(auth_client, product):
     response = await auth_client.get(
         url=f"{base_path}/{product_id}",
     )
-    detail = parse_error_detail(
+    parse_error_detail(
         response=response,
         expected_status_code=404,
+        message_error=f"Product with id='{product_id}' not found"
     )
-    assert detail["message"] == f"Product with id='{product_id}' not found"
 
 
 @pytest.mark.get_product_id
@@ -113,26 +113,25 @@ async def test_get_product_no_token(client, product):
     response = await client.get(
         url=f"{base_path}/{product.id}",
     )
-    detail = parse_error_detail(
+    parse_error_detail(
         response=response,
-        expected_status_code=401
+        expected_status_code=401,
+        message_error="Not authenticated"
     )
-    assert detail == "Not authenticated"
 
 
 @pytest.mark.get_product_id
 @pytest.mark.negative
 async def test_get_product_invalid_token(client, product):
     product_id = 1
-
     response = await client.get(
         url=f"{base_path}/{product_id}",
         headers={
             "Authorization": f"Bearer invalid token"
         }
     )
-    detail = parse_error_detail(
+    parse_error_detail(
         response=response,
-        expected_status_code=401
+        expected_status_code=401,
+        message_error="Could not validate token"
     )
-    assert detail["message"] == "Could not validate token"

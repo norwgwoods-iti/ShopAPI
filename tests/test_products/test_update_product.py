@@ -140,11 +140,12 @@ async def test_update_product_incorrect_id(admin_client, products):
             "name": "Test Update Product",
         }
     )
-    detail = parse_error_detail(
+    parse_error_detail(
         response=response,
         expected_status_code=404,
+        message_error=f"Product with id='{product_id}' not found"
     )
-    assert detail["message"] == f"Product with id='{product_id}' not found"
+
 
 @pytest.mark.update_product
 @pytest.mark.negative
@@ -154,11 +155,11 @@ async def test_update_product_empty_data(admin_client, products):
         url=f"{base_path}/{product.id}",
         json={}
     )
-    detail = parse_error_detail(
+    parse_error_detail(
         response=response,
         expected_status_code=400,
+        message_error="No fields provided for update"
     )
-    assert detail["message"] == "No fields provided for update"
 
 
 @pytest.mark.update_product
@@ -169,8 +170,8 @@ async def test_update_product_no_admin_token(auth_client, products):
         url=f"{base_path}/{product.id}",
         json={}
     )
-    detail = parse_error_detail(
+    parse_error_detail(
         response=response,
         expected_status_code=403,
+        message_error="Admin access required"
     )
-    assert detail["message"] == "Admin access required"
