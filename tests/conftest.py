@@ -134,7 +134,7 @@ async def products(db_session):
         CategoryModel(
             name=f"Test category {i}",
             slug=f"test-category-{i}",
-        ) for i in range(1,5)
+        ) for i in range(1,6)
     ]
 
     db_session.add_all(categories)
@@ -145,7 +145,9 @@ async def products(db_session):
         (categories[1], 'Test product 2', '2000.00'), # id = 2 | category_id = 2
         (categories[1], 'Test product 3', '3000.00'), # id = 3 | category_id = 2
         (categories[2], 'Test product 4', '1100.00'), # id = 4 | category_id = 3
-        (categories[3], 'Test product 5', '6700.23'), # id = 4 | category_id = 4
+        (categories[3], 'Test product 5', '6700.23'), # id = 5 | category_id = 4
+        (categories[4], 'Test product 6', '6700.23'), # id = 6 | category_id = 5
+        (categories[4], 'Test product 2', '4500.09'), # id = 7 | category_id = 5
     ]
 
     products = [
