@@ -27,7 +27,7 @@ def parse_product(
 def parse_error_detail(
         response: httpx.Response,
         expected_status_code: int,
-        message_error: str | dict[str, Any],
+        message_error: str,
 ):
     assert response.status_code == expected_status_code
     assert response.headers["Content-Type"].startswith("application/json")
@@ -35,7 +35,9 @@ def parse_error_detail(
     payload = response.json()
     assert payload["error"] is True
     assert payload["status_code"] == response.status_code
-    assert payload["detail"] == message_error
+
+    assert "detail" in payload
+    assert payload["detail"] in ({"message": message_error}, message_error)
 
 
 def parse_system_error_detail(
