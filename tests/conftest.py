@@ -58,7 +58,6 @@ async def client():
 async def prepare_database():
     async with test_engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-
     try:
         yield
     finally:
