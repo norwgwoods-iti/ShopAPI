@@ -66,7 +66,7 @@ async def test_get_product_datetime_is_aware(auth_client, products):
 
 @pytest.mark.get_products
 @pytest.mark.asyncio
-async def test_get_product_success(auth_client, product):
+async def test_get_one_product_success(auth_client, product):
     response = await auth_client.get(
         url=f"{base_path}/",
     )
@@ -119,6 +119,27 @@ async def test_get_products_success(auth_client, products):
     assert Decimal(parsed_item.price) == Decimal(product_item.price)
     assert parsed_item.stock == product_item.stock
     assert parsed_item.is_active == product_item.is_active
+
+
+@pytest.mark.get_products
+@pytest.mark.asyncio
+async def test_check_get_hide_product(
+        auth_client,
+        products,
+        product_hide,
+):
+    response = await auth_client.get(
+        url=f"{base_path}/"
+    )
+    parsed = parse_product(
+        response=response,
+        schema=StrictProductListResponse,
+        status_code=200
+    )
+    expected_ids = [p.id for p in products]
+    actual_ids = [p.id for p in parsed.items]
+
+    assert set(actual_ids) == set(expected_ids)
 
 
 """ Page Filter """
@@ -835,7 +856,7 @@ async def test_get_product_filter_search_on_upper_border(auth_client, products  
 
 @pytest.mark.get_products
 @pytest.mark.negative
-async def test_get_product_filter_search_above_upper_border(auth_client):
+async def test_get_product_filter_search_above_upper_border(auth_client, products):
     response = await auth_client.get(
         url=f"{base_path}/",
         params={
@@ -847,7 +868,7 @@ async def test_get_product_filter_search_above_upper_border(auth_client):
 
 @pytest.mark.get_products
 @pytest.mark.negative
-async def test_get_product_filter_invalid_sort_by(auth_client):
+async def test_get_product_filter_invalid_sort_by(auth_client, products):
     response = await auth_client.get(
         url=f"{base_path}/",
         params={
@@ -858,8 +879,80 @@ async def test_get_product_filter_invalid_sort_by(auth_client):
 
 
 @pytest.mark.get_products
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "order", [
+        "desc", "asc"
+    ]
+)
+async def test_get_product_filter_sort_by_same_price(
+        auth_client,
+        products,
+        order,
+):
+    response = await auth_client.get(
+        url=f"{base_path}/",
+        params={
+            "sort_by": "price",
+            "order": order,
+        }
+    )
+    parsed = parse_product(
+        response=response,
+        schema=StrictProductListResponse,
+        status_code=200
+    )
+    expected_ids = [
+        p.id
+        for p in sorted(
+            products,
+            key=lambda p: (getattr(p, "price"), p.id),
+            reverse=(order == "desc")
+        )
+    ]
+    actual_ids = [p.id for p in parsed.items]
+    assert set(actual_ids) == set(expected_ids)
+
+
+@pytest.mark.get_products
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "order", [
+        "desc", "asc"
+    ]
+)
+async def test_get_product_filter_sort_by_same_name(
+        auth_client,
+        products,
+        order,
+):
+    response = await auth_client.get(
+        url=f"{base_path}/",
+        params={
+            "sort_by": "name",
+            "order": order,
+        }
+    )
+    parsed = parse_product(
+        response=response,
+        schema=StrictProductListResponse,
+        status_code=200
+    )
+    expected_ids = [
+        p.id
+        for p in sorted(
+            products,
+            key=lambda p: (getattr(p, "name"), p.id),
+            reverse=(order == "desc")
+        )
+    ]
+    actual_ids = [p.id for p in parsed.items]
+    assert set(actual_ids) == set(expected_ids)
+
+
+@pytest.mark.get_products
 @pytest.mark.negative
-async def test_get_product_filter_invalid_order(auth_client):
+async def test_get_product_filter_invalid_order(auth_client, products):
     response = await auth_client.get(
         url=f"{base_path}/",
         params={
@@ -899,6 +992,5 @@ async def test_get_product_invalid_token(client, products):
     assert detail == "Not authenticated"
 
 """
-Сортировка	Проверку сортировки при одинаковых значениях цены или имени
 Активность	Отдельный тест, подтверждающий, что неактивные товары не попадают в список
 """
