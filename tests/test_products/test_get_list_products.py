@@ -379,35 +379,6 @@ async def test_get_products_filter_min_max_price(auth_client, products):
 
 @pytest.mark.get_products
 @pytest.mark.asyncio
-async def test_get_products_filter_search(auth_client, products):
-    response = await auth_client.get(
-        url=f"{base_path}/",
-        params={
-            "search": "product 2",
-        }
-    )
-    parsed = parse_product(
-        response=response,
-        schema=StrictProductListResponse,
-        status_code=200
-    )
-    query_search = str(response.request.url.params.get("search"))
-
-    expected_ids = [p.id for p in products if query_search in p.name]
-    actual_ids = [item.id for item in parsed.items]
-    assert set(actual_ids) == set(expected_ids)
-
-    assert parsed.total == len(expected_ids)
-    assert parsed.page == 1
-    assert parsed.page_size == 20
-    if parsed.total >= parsed.page_size:
-        assert len(parsed.items) == parsed.page_size
-    else:
-        assert len(parsed.items) == len(expected_ids)
-
-
-@pytest.mark.get_products
-@pytest.mark.asyncio
 @pytest.mark.parametrize(
     "sort_by, order",
     [
@@ -700,15 +671,101 @@ async def test_get_product_filter_min_equal_max_price(auth_client, products):
         schema=StrictProductListResponse,
         status_code=200
     )
-    expected_ids = [p.id for p in products if p.price == query_params["min_price"] and p.price == query_params["max_price"]]
+    expected_ids = [
+        p.id for p in products
+        if p.price == query_params["min_price"] and p.price == query_params["max_price"]
+    ]
     actual_ids = [item.id for item in parsed.items]
 
     assert set(actual_ids) == set(expected_ids)
 
 
+""" Search Test """
+@pytest.mark.get_products
+@pytest.mark.asyncio
+async def test_get_products_filter_search(auth_client, products):
+    name_product = products[1].name
+    search_name = name_product.lower().lstrip('test ') # "product 2"
+    response = await auth_client.get(
+        url=f"{base_path}/",
+        params={
+            "search": search_name,
+        }
+    )
+    parsed = parse_product(
+        response=response,
+        schema=StrictProductListResponse,
+        status_code=200
+    )
+    expected_ids = [
+        p.id for p in products
+        if search_name in p.name
+    ]
+    actual_ids = [item.id for item in parsed.items]
+    assert set(actual_ids) == set(expected_ids)
+
+    assert parsed.total == len(expected_ids)
+    assert parsed.page == 1
+    assert parsed.page_size == 20
+    if parsed.total >= parsed.page_size:
+        assert len(parsed.items) == parsed.page_size
+    else:
+        assert len(parsed.items) == len(expected_ids)
+
+
+@pytest.mark.get_products
+@pytest.mark.asyncio
+async def test_get_products_filter_search_uppercase(auth_client, products):
+    name_product = products[1].name
+    search_name = name_product.lower().lstrip('test ')  # "product 2"
+    response = await auth_client.get(
+        url=f"{base_path}/",
+        params={
+            "search": search_name.upper(), # "PRODUCT 2"
+        }
+    )
+    parsed = parse_product(
+        response=response,
+        schema=StrictProductListResponse,
+        status_code=200
+    )
+    query_search = str(response.request.url.params.get('search').lower().strip())
+    expected_ids = [
+        p.id for p in products
+        if query_search in p.name
+    ]
+    actual_ids = [item.id for item in parsed.items]
+    assert set(actual_ids) == set(expected_ids)
+
+
+@pytest.mark.get_products
+@pytest.mark.asyncio
+async def test_get_products_filter_search_space_around(auth_client, products):
+    name_product = products[1].name
+    search_name = name_product.lower().lstrip('test ')  # "product 2"
+    response = await auth_client.get(
+        url=f"{base_path}/",
+        params={
+            "search": f" {search_name} ", # " product 2 "
+        }
+    )
+    parsed = parse_product(
+        response=response,
+        schema=StrictProductListResponse,
+        status_code=200
+    )
+    query_search = str(response.request.url.params.get('search').lower().strip())
+    expected_ids = [
+        p.id for p in products
+        if query_search in p.name
+    ]
+    actual_ids = [item.id for item in parsed.items]
+    assert set(actual_ids) == set(expected_ids)
+
+
 @pytest.mark.get_products
 @pytest.mark.negative
-async def test_get_product_filter_search_bellow_lower_border(auth_client):
+async def test_get_product_filter_search_no_symbol(auth_client):
     response = await auth_client.get(
         url=f"{base_path}/",
         params={
@@ -734,7 +791,7 @@ async def test_get_product_filter_search_on_lower_border(auth_client, products):
     )
     query_search = str(response.request.url.params.get("search"))
 
-    expected_ids = [p.id for p in products if query_search.casefold() in p.name.casefold()]
+    expected_ids = [p.id for p in products if query_search.lower() in p.name.lower()]
     actual_ids = [p.id for p in parsed.items]
     assert set(actual_ids) == set(expected_ids)
 
@@ -842,9 +899,6 @@ async def test_get_product_invalid_token(client, products):
     assert detail == "Not authenticated"
 
 """
-Категория	Проверку несуществующего category_id — ожидается пустой список
-Цена	Проверку min_price == max_price
-Поиск	Проверку поиска с другим регистром и пробелами по краям
 Сортировка	Проверку сортировки при одинаковых значениях цены или имени
 Активность	Отдельный тест, подтверждающий, что неактивные товары не попадают в список
 """
