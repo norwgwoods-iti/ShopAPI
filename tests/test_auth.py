@@ -42,13 +42,13 @@ async def user_login_success(client):
 
     return response_login
 
-
+@pytest.mark.auth
 @pytest.mark.asyncio
 async def test_register_user_success(client):
 
     await user_register_success(client)
 
-
+@pytest.mark.auth
 @pytest.mark.asyncio
 async def test_register_duplicate_email(client):
     payload = {
@@ -70,7 +70,7 @@ async def test_register_duplicate_email(client):
     assert second_response.status_code == 400
     assert second_response.json()["detail"] == {"message": "Email already registered"}
 
-
+@pytest.mark.auth
 @pytest.mark.asyncio
 async def test_register_invalid_email(client):
     response = await client.post(
@@ -82,7 +82,7 @@ async def test_register_invalid_email(client):
     )
     assert response.status_code == 422
 
-
+@pytest.mark.auth
 @pytest.mark.asyncio
 async def test_authenticate_user_success(client):
     response_create_user = await user_register_success(client)
@@ -105,7 +105,7 @@ async def test_authenticate_user_success(client):
 
     return response_login
 
-
+@pytest.mark.auth
 @pytest.mark.asyncio
 async def test_authenticate_user_invalid_password(client):
     response_create_user = await user_register_success(client)
@@ -120,7 +120,7 @@ async def test_authenticate_user_invalid_password(client):
         }
     )
     assert response_login.status_code == 401
-
+@pytest.mark.auth
 @pytest.mark.negative
 async def test_register_user_empty_password(client):
     response = await client.post(
@@ -132,7 +132,7 @@ async def test_register_user_empty_password(client):
     )
     assert response.status_code == 400
 
-
+@pytest.mark.auth
 @pytest.mark.negative
 async def test_register_user_non_special_symbol_password(client):
     response = await client.post(
@@ -144,7 +144,7 @@ async def test_register_user_non_special_symbol_password(client):
     )
     assert response.status_code == 400
 
-
+@pytest.mark.auth
 @pytest.mark.negative
 async def test_register_user_non_capital_letter_password(client):
     response = await client.post(
@@ -156,7 +156,7 @@ async def test_register_user_non_capital_letter_password(client):
     )
     assert response.status_code == 400
 
-
+@pytest.mark.auth
 @pytest.mark.asyncio
 async def test_auth_me_success(client):
 
@@ -179,7 +179,7 @@ async def test_auth_me_success(client):
     assert "role" in result
     assert "password_hash" not in result
 
-
+@pytest.mark.auth
 @pytest.mark.negative
 async def test_auth_me_no_token(client):
     response = await client.get(
@@ -191,7 +191,7 @@ async def test_auth_me_no_token(client):
     )
     assert detail == "Not authenticated"
 
-
+@pytest.mark.auth
 @pytest.mark.negative
 async def test_auth_me_invalid_token(client):
     response = await client.get(
@@ -206,7 +206,7 @@ async def test_auth_me_invalid_token(client):
     )
     assert detail["message"] == "Could not validate token"
 
-
+@pytest.mark.auth
 @pytest.mark.negative
 async def test_auth_me_expired_token(client):
     expired_payload = {
@@ -230,7 +230,7 @@ async def test_auth_me_expired_token(client):
     )
     assert detail["message"] == "Could not validate token"
 
-
+@pytest.mark.auth
 @pytest.mark.negative
 async def test_auth_me_no_email_token(client):
     payload = {
@@ -253,7 +253,7 @@ async def test_auth_me_no_email_token(client):
     )
     assert detail["message"] == "Could not validate token"
 
-
+@pytest.mark.auth
 @pytest.mark.negative
 async def test_auth_me_unknown_user_token(client):
     payload = {
