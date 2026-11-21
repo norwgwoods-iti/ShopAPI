@@ -51,6 +51,10 @@ markers= [
     "auth: authentificate user"
 ]
 
+[tool.prehook]
+hooks = [
+    { name = "test", run = "pytest", on = ["pre-push"] },
+]
 
 #[project.scripts]
 #shopapi = "src/shopapi/:main"
