@@ -10,8 +10,7 @@ from tests.utils import parse_product, parse_error_detail, parse_system_error_de
 base_path = "/api/v1/products"
 
 @pytest.mark.get_products
-@pytest.mark.asyncio
-async def test_get_products_contract(
+async def test_get_products_response_contract(
         auth_client: AsyncClient,
         products
 ):
@@ -40,7 +39,6 @@ async def test_get_products_contract(
 
 
 @pytest.mark.get_products
-@pytest.mark.asyncio
 async def test_get_products_price_keeps_two_decimals(
         auth_client: AsyncClient,
         products
@@ -75,7 +73,6 @@ async def test_get_product_datetime_is_aware(
 
 
 @pytest.mark.get_products
-@pytest.mark.asyncio
 async def test_get_one_product_success(
         auth_client: AsyncClient,
         product
@@ -105,7 +102,6 @@ async def test_get_one_product_success(
 
 
 @pytest.mark.get_products
-@pytest.mark.asyncio
 async def test_get_products_success(
         auth_client: AsyncClient,
         products
@@ -113,13 +109,11 @@ async def test_get_products_success(
     response = await auth_client.get(
         url=f"{base_path}/",
     )
-
     parsed = parse_product(
         response=response,
         schema=StrictProductListResponse,
         status_code=200
     )
-
     assert parsed.total == len(products)
     assert parsed.page == 1
     assert parsed.page_size == 20
@@ -138,7 +132,6 @@ async def test_get_products_success(
 
 
 @pytest.mark.get_products
-@pytest.mark.asyncio
 async def test_check_get_hide_product(
         auth_client: AsyncClient,
         products,
@@ -160,7 +153,6 @@ async def test_check_get_hide_product(
 
 """ Page Filter """
 @pytest.mark.get_products
-@pytest.mark.asyncio
 async def test_get_products_filter_empty_page(
         auth_client: AsyncClient,
         product
@@ -185,7 +177,6 @@ async def test_get_products_filter_empty_page(
 
 
 @pytest.mark.get_products
-@pytest.mark.asyncio
 async def test_get_products_filter_page_size(
         auth_client: AsyncClient,
         products
@@ -213,7 +204,6 @@ async def test_get_products_filter_page_size(
 
 
 @pytest.mark.get_products
-@pytest.mark.asyncio
 async def test_get_products_filter_page_have_product(
         auth_client: AsyncClient,
         products
@@ -246,7 +236,6 @@ async def test_get_products_filter_page_have_product(
 
 
 @pytest.mark.get_products
-@pytest.mark.asyncio
 async def test_get_products_filter_category_id(
         auth_client: AsyncClient,
         products
@@ -346,7 +335,6 @@ async def test_get_products_filter_category_id_bellow_border(
 
 
 @pytest.mark.get_products
-@pytest.mark.asyncio
 async def test_get_products_filter_min_price(
         auth_client: AsyncClient,
         products
@@ -378,7 +366,6 @@ async def test_get_products_filter_min_price(
 
 
 @pytest.mark.get_products
-@pytest.mark.asyncio
 async def test_get_products_filter_max_price(
         auth_client: AsyncClient,
         products
@@ -408,8 +395,8 @@ async def test_get_products_filter_max_price(
     else:
         assert len(parsed.items) == len(expected_ids)
 
+
 @pytest.mark.get_products
-@pytest.mark.asyncio
 async def test_get_products_filter_min_max_price(
         auth_client: AsyncClient,
         products
@@ -449,7 +436,6 @@ async def test_get_products_filter_min_max_price(
 
 
 @pytest.mark.get_products
-@pytest.mark.asyncio
 @pytest.mark.parametrize(
     "sort_by, order",
     [
@@ -533,7 +519,6 @@ async def test_get_product_filter_page_size_bellow_border(auth_client):
 
 
 @pytest.mark.get_products
-@pytest.mark.asyncio
 async def test_get_product_filter_page_size_on_border(
         auth_client: AsyncClient,
         products
@@ -621,7 +606,6 @@ async def test_get_product_filter_min_price_bellow_border(auth_client):
 
 
 @pytest.mark.get_products
-@pytest.mark.asyncio
 async def test_get_product_filter_min_price_on_border(
         auth_client: AsyncClient,
         products
@@ -653,7 +637,6 @@ async def test_get_product_filter_min_price_on_border(
 
 
 @pytest.mark.get_products
-@pytest.mark.asyncio
 async def test_get_product_filter_invalid_min_price(auth_client):
     response = await auth_client.get(
         url=f"{base_path}/",
@@ -677,7 +660,6 @@ async def test_get_product_max_price_bellow_border(auth_client):
 
 
 @pytest.mark.get_products
-@pytest.mark.asyncio
 async def test_get_product_max_price_on_border(
         auth_client: AsyncClient,
         products
@@ -709,7 +691,6 @@ async def test_get_product_max_price_on_border(
 
 
 @pytest.mark.get_products
-@pytest.mark.asyncio
 async def test_get_product_filter_invalid_max_price(auth_client):
     response = await auth_client.get(
         url=f"{base_path}/",
@@ -739,7 +720,6 @@ async def test_get_product_filter_min_more_max_price(auth_client):
 
 
 @pytest.mark.get_products
-@pytest.mark.asyncio
 async def test_get_product_filter_min_equal_max_price(
         auth_client: AsyncClient,
         products
@@ -768,7 +748,6 @@ async def test_get_product_filter_min_equal_max_price(
 
 """ Search Test """
 @pytest.mark.get_products
-@pytest.mark.asyncio
 async def test_get_products_filter_search(
         auth_client: AsyncClient,
         products
@@ -803,7 +782,6 @@ async def test_get_products_filter_search(
 
 
 @pytest.mark.get_products
-@pytest.mark.asyncio
 async def test_get_products_filter_search_uppercase(
         auth_client: AsyncClient,
         products
@@ -831,7 +809,6 @@ async def test_get_products_filter_search_uppercase(
 
 
 @pytest.mark.get_products
-@pytest.mark.asyncio
 async def test_get_products_filter_search_space_around(
         auth_client: AsyncClient,
         products
@@ -903,7 +880,6 @@ async def test_get_product_filter_search_on_lower_border(
 
 
 @pytest.mark.get_products
-@pytest.mark.asyncio
 async def test_get_product_filter_search_on_upper_border(
         auth_client: AsyncClient,
         products
@@ -965,7 +941,6 @@ async def test_get_product_filter_invalid_sort_by(
 
 
 @pytest.mark.get_products
-@pytest.mark.asyncio
 @pytest.mark.parametrize(
     "order", [
         "desc", "asc"
@@ -1001,7 +976,6 @@ async def test_get_product_filter_sort_by_same_price(
 
 
 @pytest.mark.get_products
-@pytest.mark.asyncio
 @pytest.mark.parametrize(
     "order", [
         "desc", "asc"
@@ -1054,7 +1028,7 @@ async def test_get_product_filter_invalid_order(
 """ Authorization Check """
 @pytest.mark.get_products
 @pytest.mark.negative
-async def test_get_product_unauthorize(
+async def test_get_product_unauthorized(
         client: AsyncClient,
         products
 ):
@@ -1088,8 +1062,7 @@ async def test_get_product_invalid_token(
 
 
 @pytest.mark.get_products
-@pytest.mark.asyncio
-async def test_get_product_with_admin_token(
+async def test_get_product_admin_token(
         admin_client: AsyncClient,
         products
 ):

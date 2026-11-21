@@ -3,14 +3,18 @@ import pytest
 from datetime import datetime
 from decimal import Decimal
 
+from httpx import AsyncClient
+
 from tests.schemas import StrictProductResponse
 from tests.utils import parse_product, parse_error_detail
 
 base_path = "/api/v1/products"
 
 @pytest.mark.get_product_id
-@pytest.mark.asyncio
-async def test_get_product_response_type(auth_client, product):
+async def test_get_product_response_type(
+        auth_client: AsyncClient,
+        product
+):
     response = await auth_client.get(
         url=f"{base_path}/{product.id}",
     )
@@ -30,7 +34,10 @@ async def test_get_product_response_type(auth_client, product):
 
 
 @pytest.mark.get_product_id
-async def test_get_product_price_keeps_two_decimals(auth_client, product):
+async def test_get_product_price_keeps_two_decimals(
+        auth_client: AsyncClient,
+        product
+):
     response = await auth_client.get(
         url=f"{base_path}/{product.id}",
     )
@@ -43,7 +50,10 @@ async def test_get_product_price_keeps_two_decimals(auth_client, product):
 
 
 @pytest.mark.get_product_id
-async def test_get_product_datetime_is_aware(auth_client, product):
+async def test_get_product_datetime_is_aware(
+        auth_client: AsyncClient,
+        product
+):
     response = await auth_client.get(
         url=f"{base_path}/{product.id}",
     )
@@ -56,8 +66,10 @@ async def test_get_product_datetime_is_aware(auth_client, product):
 
 
 @pytest.mark.get_product_id
-@pytest.mark.asyncio
-async def test_get_product_success_id(auth_client, product):
+async def test_get_product_success_id(
+        auth_client: AsyncClient,
+        product
+):
     response = await auth_client.get(
          url=f"{base_path}/{product.id}",
     )
@@ -72,16 +84,16 @@ async def test_get_product_success_id(auth_client, product):
     assert parsed.description == product.description
     assert parsed.stock == product.stock
     assert parsed.is_active == product.is_active
-
     assert Decimal(parsed.price) == Decimal(product.price)
-
     assert parsed.created_at == product.created_at
 
 
 @pytest.mark.get_product_id
 @pytest.mark.negative
-async def test_get_product_incorrect_id(auth_client, product):
-
+async def test_get_product_incorrect_id(
+        auth_client: AsyncClient,
+        product
+):
     product_id = 9999999
 
     response = await auth_client.get(
@@ -96,7 +108,10 @@ async def test_get_product_incorrect_id(auth_client, product):
 
 @pytest.mark.get_product_id
 @pytest.mark.negative
-async def test_get_product_invalid_id(auth_client, product):
+async def test_get_product_invalid_id(
+        auth_client: AsyncClient,
+        product
+):
     product_id = 'invalid-id'
 
     response = await auth_client.get(
@@ -109,7 +124,10 @@ async def test_get_product_invalid_id(auth_client, product):
 
 """ Authorization Check """
 @pytest.mark.negative
-async def test_get_product_no_token(client, product):
+async def test_get_product_no_token(
+        client: AsyncClient,
+        product
+):
     response = await client.get(
         url=f"{base_path}/{product.id}",
     )
@@ -122,7 +140,10 @@ async def test_get_product_no_token(client, product):
 
 @pytest.mark.get_product_id
 @pytest.mark.negative
-async def test_get_product_invalid_token(client, product):
+async def test_get_product_invalid_token(
+        client: AsyncClient,
+        product
+):
     product_id = 1
     response = await client.get(
         url=f"{base_path}/{product_id}",
