@@ -203,16 +203,14 @@ async def post_product_payload(category):
 
 """ Create admin and GET token """
 @pytest_asyncio.fixture()
-async def admin_client(db_session, client):
-    admin_info={
-        "email": "admin@example.ru",
-        "password": "!AdminPassword123",
-        "role": UserRole.ADMIN
-    }
-    admin = UserModel(
-        email=admin_info["email"],
-        password_hash=hash_password(admin_info["password"]),
-        role=admin_info["role"],
+async def post_product(
+        post_product_payload,
+        admin_client,
+        category
+):
+    response = await admin_client.post(
+        url="/api/v1/products/",
+        json=post_product_payload,
     )
     db_session.add(admin)
     await db_session.commit()
