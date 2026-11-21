@@ -28,10 +28,10 @@ class ProductCreateSchema(BaseModel):
     category_id: int
     price: Decimal
     stock: int
+    is_active: bool = True
 
 class ProductResponseCreateSchema(ProductCreateSchema):
     id: int
-    is_active: bool = True
 
     model_config = ConfigDict(from_attributes=True)
 

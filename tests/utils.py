@@ -1,6 +1,20 @@
+from decimal import Decimal
+from typing import Any
+from urllib import response
 
-def parse_product(*, response, schema):
-    assert response.status_code == 200
+import httpx
+from httpx import AsyncClient
+
+from shopapi.schemas.product import ProductResponseSchema
+
+
+def parse_product(
+        *,
+        response: httpx.Response,
+        schema ,
+        status_code: int
+):
+    assert response.status_code == status_code
     assert response.headers["Content-Type"].startswith("application/json")
 
     payload = response.json()
@@ -9,11 +23,61 @@ def parse_product(*, response, schema):
 
     return parsed
 
-def parse_error_detail(*, payload, response):
+
+def parse_error_detail(
+        response: httpx.Response,
+        expected_status_code: int,
+        message_error: str,
+):
+    assert response.status_code == expected_status_code
+    assert response.headers["Content-Type"].startswith("application/json")
+
+    payload = response.json()
     assert payload["error"] is True
     assert payload["status_code"] == response.status_code
+
+    assert "detail" in payload
+    assert payload["detail"] in ({"message": message_error}, message_error)
+
+
+def parse_system_error_detail(
+        *,
+        response: httpx.Response,
+        expected_status_code:int,
+        message_error: str | dict[str, Any],
+        input_value: Any = None
+) -> None:
+    assert response.status_code == expected_status_code
+    assert response.headers["Content-Type"].startswith("application/json")
+
+    payload = response.json()
     assert "detail" in payload
 
-    detail = payload["detail"]
+    detail = payload["detail"][0]
+    assert detail["msg"] == message_error
+    assert detail["input"] == ({} if input_value is None else input_value)
 
-    return detail
+
+async def patch_and_parse(
+        admin_client: AsyncClient,
+        product_id: int,
+        payload: dict[str, Any],
+        *,
+        base_path: str = "/api/v1/products",
+        status_code: int = 200,
+        schema=ProductResponseSchema,
+):
+    json_payload = {
+        k: str(v) if isinstance(v, Decimal) else v
+        for k, v in payload.items()
+    }
+    response = await admin_client.patch(
+        url=f"{base_path}/{product_id}",
+        json=json_payload
+    )
+    return parse_product(
+        response=response,
+        schema=schema,
+        status_code=status_code
+    )
+

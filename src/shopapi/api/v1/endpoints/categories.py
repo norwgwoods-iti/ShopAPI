@@ -87,7 +87,9 @@ async def get_category(
     if not category:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Category with id='{category_id}' not found"
+            detail={
+                "message": f"Category with id='{category_id}' not found"
+            }
         )
 
     return category
@@ -110,7 +112,9 @@ async def create_category(
     if category:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail=f"Category {category.name} already exists"
+            detail={
+                "message": f"Category {category.name} already exists"
+            }
         )
     else:
         new_category = CategoryModel(**form_data.model_dump())
@@ -123,7 +127,9 @@ async def create_category(
             await session.rollback()
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
-                detail=f"Category {new_category.name} already exists"
+                detail={
+                    "message": f"Category {new_category.name} already exists"
+                }
             )
 
         await session.refresh(new_category)
@@ -146,7 +152,9 @@ async def update_category(
     if not category:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Category with id='{category_id}' not found"
+            detail={
+                "message": f"Category with id='{category_id}' not found"
+            }
         )
 
     update_data = form_data.model_dump(exclude_unset=True)
@@ -154,7 +162,9 @@ async def update_category(
     if not update_data:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="No fields provided for update",
+            detail={
+                "message": "No fields provided for update",
+            }
         )
 
     for field, value in update_data.items():
@@ -166,7 +176,9 @@ async def update_category(
         await session.rollback()
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail=f"Category with name='{form_data.name}' already exists"
+            detail={
+                "message": f"Category with name='{form_data.name}' already exists"
+            }
         ) from e
 
     await session.refresh(category)
@@ -186,7 +198,9 @@ async def update_category(
     if not category:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Category with id='{category_id}' not found"
+            detail={
+                "message": f"Category with id='{category_id}' not found"
+            }
         )
 
     await session.delete(category)

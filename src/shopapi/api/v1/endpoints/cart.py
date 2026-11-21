@@ -34,12 +34,16 @@ async def add_to_cart(
     if not product:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Product with id='{form_data.product_id}' not found",
+            detail={
+                "message": f"Product with id='{form_data.product_id}' not found",
+            }
         )
     if not product.is_active:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail="This product is not active",
+            detail={
+                "message": "This product is not active",
+            }
         )
 
     existing = await session.scalar(
@@ -56,7 +60,9 @@ async def add_to_cart(
     if new_quantity > product.stock:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail="This item is not available in this quantity",
+            detail={
+                "message": "This item is not available in this quantity",
+            }
         )
 
     if existing:
@@ -78,7 +84,9 @@ async def add_to_cart(
         await session.rollback()
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail="Could not update cart",
+            detail={
+                "message": "Could not update cart",
+            }
         )from e
 
     rows = (
@@ -134,18 +142,24 @@ async def update_cart_item(
     if not row:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Item with id='{item_id}' not found",
+            detail={
+                "message": f"Item with id='{item_id}' not found",
+            }
         )
     cart, product = row
     if not product.is_active:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail="This product is not active",
+            detail={
+                "message": "This product is not active",
+            }
         )
     if form_data.quantity > product.stock:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail="This item is not available in this quantity",
+            detail={
+                "message": "This item is not available in this quantity",
+            }
         )
     cart.quantity = form_data.quantity
     try:
@@ -154,7 +168,9 @@ async def update_cart_item(
         await session.rollback()
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail="Could not update quantity cart",
+            detail={
+                "message": "Could not update quantity cart",
+            }
         )from e
 
     return get_cart_item_response(
@@ -183,7 +199,9 @@ async def delete_cart_item(
     if not row:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Item with id='{item_id}' not found",
+            detail={
+                "message": f"Item with id='{item_id}' not found",
+            }
         )
 
     await session.delete(row)

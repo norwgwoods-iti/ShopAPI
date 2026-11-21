@@ -27,7 +27,6 @@ def pytest_asyncio_loop_factories(
     return {"default": asyncio.new_event_loop}
 
 
-
 test_engine =  create_async_engine(settings.test_database_url)
 
 TestSession = async_sessionmaker(
@@ -35,15 +34,20 @@ TestSession = async_sessionmaker(
     expire_on_commit=False,
 )
 
-async def override_get_session():
-    async with TestSession() as session:
-        yield session
+
+@pytest_asyncio.fixture
+async def app_override(db_session):
+    async def override():
+        yield db_session
+    app.dependency_overrides[get_session] = override
+    try:
+        yield app
+    finally:
+        app.dependency_overrides.clear()
 
 
 @pytest_asyncio.fixture
-async def client():
-    app.dependency_overrides[get_session] = override_get_session
-
+async def client(app_override):
     try:
         async with AsyncClient(
             transport=ASGITransport(app=app),
@@ -54,11 +58,98 @@ async def client():
         app.dependency_overrides.clear()
 
 
-@pytest_asyncio.fixture(autouse=True)
+""" Create user and GET token """
+@pytest_asyncio.fixture()
+async def auth_client(
+        db_session,
+        app_override
+):
+    try:
+        async with AsyncClient(
+                transport=ASGITransport(app=app),
+                base_url="http://test",
+        ) as user_connection:
+            user_info={
+                "email": "test@example.ru",
+                "password": "!TestPassword123",
+                "role": UserRole.USER
+            }
+            user = UserModel(
+                email=user_info["email"],
+                password_hash=hash_password(user_info["password"]),
+                role=user_info["role"]
+            )
+
+            db_session.add(user)
+            await db_session.commit()
+
+            response_log = await user_connection.post(
+                url="/api/v1/auth/login",
+                data={
+                    "username": user_info["email"],
+                    "password": user_info["password"],
+                }
+            )
+            assert response_log.status_code == 200
+
+            auth_token = response_log.json()["access_token"]
+
+            user_connection.headers["Authorization"] = f"Bearer {auth_token}"
+
+            yield user_connection
+
+    finally:
+           app.dependency_overrides.clear()
+
+
+""" Create admin and GET token """
+@pytest_asyncio.fixture()
+async def admin_client(
+        db_session,
+        app_override
+):
+    try:
+        async with AsyncClient(
+                transport=ASGITransport(app=app),
+                base_url="http://test",
+        ) as admin_connection:
+            admin_info={
+                "email": "admin@example.ru",
+                "password": "!AdminPassword123",
+                "role": UserRole.ADMIN
+            }
+            admin = UserModel(
+                email=admin_info["email"],
+                password_hash=hash_password(admin_info["password"]),
+                role=admin_info["role"],
+            )
+            db_session.add(admin)
+            await db_session.commit()
+
+            response_log = await admin_connection.post(
+                url="/api/v1/auth/login",
+                data={
+                    "username": admin_info["email"],
+                    "password": admin_info["password"],
+                }
+            )
+            assert response_log.status_code == 200
+
+            auth_token = response_log.json()["access_token"]
+
+            admin_connection.headers["Authorization"] = f"Bearer {auth_token}"
+
+            yield admin_connection
+
+    finally:
+        app.dependency_overrides.clear()
+
+
+@pytest_asyncio.fixture(scope="session", autouse=True)
 async def prepare_database():
     async with test_engine.begin() as conn:
+        await conn.run_sync(Base.metadata.drop_all)
         await conn.run_sync(Base.metadata.create_all)
-
     try:
         yield
     finally:
@@ -66,31 +157,48 @@ async def prepare_database():
             await conn.run_sync(Base.metadata.drop_all)
 
 
-
-@pytest_asyncio.fixture
-async def db_session(prepare_database):
-    async with TestSession() as session:
-        yield session
-
-
 @pytest_asyncio.fixture(
     scope="session",
     autouse=True
 )
-async def dispose_test_engine():
+async def dispose_test_engine(prepare_database):
     yield
     await test_engine.dispose()
 
 
+@pytest_asyncio.fixture
+async def db_session(prepare_database):
+    connection = await test_engine.connect()
+    transaction = await connection.begin()
+    session = TestSession(
+        bind=connection,
+        join_transaction_mode="create_savepoint"
+    )
+    try:
+        yield session
+    finally:
+        await session.close()
+        await transaction.rollback()
+        await connection.close()
+
+
 @pytest_asyncio.fixture()
-async def product(db_session):
+async def category(db_session):
     category = CategoryModel(
         name="Test category",
         slug="test-category",
     )
     db_session.add(category)
-    await db_session.flush()
+    await db_session.commit()
 
+    return category
+
+
+@pytest_asyncio.fixture()
+async def product(
+        db_session,
+        category
+):
     product = ProductModel(
         category_id=category.id,
         name="Test product",
@@ -107,14 +215,24 @@ async def product(db_session):
 
 
 @pytest_asyncio.fixture()
+async def product_hide(
+        db_session,
+        product,
+):
+    setattr(product, "is_active", False)
+    await db_session.commit()
+
+    return product
+
+
+@pytest_asyncio.fixture()
 async def products(db_session):
     categories = [
         CategoryModel(
             name=f"Test category {i}",
             slug=f"test-category-{i}",
-        ) for i in range(1,4)
+        ) for i in range(1,6)
     ]
-
     db_session.add_all(categories)
     await db_session.flush()
 
@@ -123,8 +241,10 @@ async def products(db_session):
         (categories[1], 'Test product 2', '2000.00'), # id = 2 | category_id = 2
         (categories[1], 'Test product 3', '3000.00'), # id = 3 | category_id = 2
         (categories[2], 'Test product 4', '1100.00'), # id = 4 | category_id = 3
+        (categories[3], 'Test product 5', '6700.23'), # id = 5 | category_id = 4
+        (categories[4], 'Test product 6', '6700.23'), # id = 6 | category_id = 5
+        (categories[4], 'Test product 2', '4500.09'), # id = 7 | category_id = 5
     ]
-
     products = [
         ProductModel(
             category_id=category.id,
@@ -135,73 +255,31 @@ async def products(db_session):
             is_active=True,
         ) for category, name, price in specs
     ]
-
     db_session.add_all(products)
     await db_session.commit()
 
     return products
 
 
-""" Create user and GET token """
 @pytest_asyncio.fixture()
-async def auth_client(db_session, client):
-    user_info={
-        "email": "test@example.ru",
-        "password": "!TestPassword123",
-        "role": UserRole.USER
+async def post_product_payload(category):
+    return {
+        "name": "Футболка",
+        "description": "Шляпа",
+        "category_id": category.id,
+        "price": "1000.00",
+        "stock": 100,
     }
-    user = UserModel(
-        email=user_info["email"],
-        password_hash=hash_password(user_info["password"]),
-        role=user_info["role"]
-    )
-
-    db_session.add(user)
-    await db_session.commit()
-
-    response_log = await client.post(
-        url="/api/v1/auth/login",
-        data={
-            "username": user_info["email"],
-            "password": user_info["password"],
-        }
-    )
-    assert response_log.status_code == 200
-
-    auth_token = response_log.json()["access_token"]
-
-    client.headers["Authorization"] = f"Bearer {auth_token}"
-
-    return client
 
 
-""" Create admin and GET token """
 @pytest_asyncio.fixture()
-async def admin_client(db_session, client):
-    admin_info={
-        "email": "admin@example.ru",
-        "password": "!AdminPassword123",
-        "role": UserRole.ADMIN
-    }
-    admin = UserModel(
-        email=admin_info["email"],
-        password_hash=hash_password(admin_info["password"]),
-        role=admin_info["role"],
+async def post_product(
+        post_product_payload,
+        admin_client,
+        category
+):
+    response = await admin_client.post(
+        url="/api/v1/products/",
+        json=post_product_payload,
     )
-    db_session.add(admin)
-    await db_session.commit()
-
-    response_log = await client.post(
-        url="/api/v1/auth/login",
-        data={
-            "username": admin_info["email"],
-            "password": admin_info["password"],
-        }
-    )
-    assert response_log.status_code == 200
-
-    auth_token = response_log.json()["access_token"]
-
-    client.headers["Authorization"] = f"Bearer {auth_token}"
-
-    return client
+    return response

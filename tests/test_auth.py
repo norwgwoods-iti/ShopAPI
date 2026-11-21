@@ -3,12 +3,14 @@ import pytest
 import jwt
 from datetime import datetime, timedelta, timezone
 
+from httpx import AsyncClient
+
 from shopapi.core.config import settings
+from tests.utils import parse_error_detail
 
 base_path = "api/v1/auth"
 
-async def user_register_success(client):
-
+async def user_register_success(client: AsyncClient):
     response = await client.post(
         url=f"{base_path}/register",
         json={
@@ -16,7 +18,6 @@ async def user_register_success(client):
             "password": "!TestPassword123",
         }
     )
-
     assert response.status_code == 201
 
     data = response.json()
@@ -29,7 +30,8 @@ async def user_register_success(client):
 
     return response
 
-async def user_login_success(client):
+async def user_login_success(client: AsyncClient):
+
     await user_register_success(client)
 
     response_login = await client.post(
@@ -39,20 +41,21 @@ async def user_login_success(client):
             "password": "!TestPassword123",
         }
     )
-
     assert response_login.status_code == 200
 
     return response_login
 
 
+@pytest.mark.auth
 @pytest.mark.asyncio
-async def test_register_user_success(client):
+async def test_register_user_success(client: AsyncClient):
 
     await user_register_success(client)
 
 
+@pytest.mark.auth
 @pytest.mark.asyncio
-async def test_register_duplicate_email(client):
+async def test_register_duplicate_email(client: AsyncClient):
     payload = {
         "email": "test@example.ru",
         "password": "!TestPassword123",
@@ -70,12 +73,12 @@ async def test_register_duplicate_email(client):
 
     assert first_response.status_code == 201
     assert second_response.status_code == 400
-    assert second_response.json()["detail"] == "Email already registered"
+    assert second_response.json()["detail"] == {"message": "Email already registered"}
 
 
+@pytest.mark.auth
 @pytest.mark.asyncio
-async def test_register_invalid_email(client):
-
+async def test_register_invalid_email(client: AsyncClient):
     response = await client.post(
         url=f"{base_path}/register",
         json={
@@ -83,13 +86,11 @@ async def test_register_invalid_email(client):
             "password": "!TestPassword123",
         },
     )
-
     assert response.status_code == 422
 
-
+@pytest.mark.auth
 @pytest.mark.asyncio
-async def test_authenticate_user_success(client):
-
+async def test_authenticate_user_success(client: AsyncClient):
     response_create_user = await user_register_success(client)
 
     data_register = response_create_user.json()
@@ -101,7 +102,6 @@ async def test_authenticate_user_success(client):
             "password": "!TestPassword123",
         }
     )
-
     assert response_login.status_code == 200
 
     data_login = response_login.json()
@@ -111,10 +111,9 @@ async def test_authenticate_user_success(client):
 
     return response_login
 
-
+@pytest.mark.auth
 @pytest.mark.asyncio
-async def test_authenticate_user_invalid_password(client):
-
+async def test_authenticate_user_invalid_password(client: AsyncClient):
     response_create_user = await user_register_success(client)
 
     data_register = response_create_user.json()
@@ -126,12 +125,10 @@ async def test_authenticate_user_invalid_password(client):
             "password": "123TestPassword!",
         }
     )
-
     assert response_login.status_code == 401
-
+@pytest.mark.auth
 @pytest.mark.negative
-async def test_register_user_empty_password(client):
-
+async def test_register_user_empty_password(client: AsyncClient):
     response = await client.post(
         url=f"{base_path}/register",
         json={
@@ -139,13 +136,11 @@ async def test_register_user_empty_password(client):
             "password": "",
         }
     )
-
     assert response.status_code == 400
 
-
+@pytest.mark.auth
 @pytest.mark.negative
-async def test_register_user_non_special_symbol_password(client):
-
+async def test_register_user_non_special_symbol_password(client: AsyncClient):
     response = await client.post(
         url=f"{base_path}/register",
         json={
@@ -153,13 +148,11 @@ async def test_register_user_non_special_symbol_password(client):
             "password": "TestPassword123",
         }
     )
-
     assert response.status_code == 400
 
-
+@pytest.mark.auth
 @pytest.mark.negative
-async def test_register_user_non_capital_letter_password(client):
-
+async def test_register_user_non_capital_letter_password(client: AsyncClient):
     response = await client.post(
         url=f"{base_path}/register",
         json={
@@ -167,12 +160,11 @@ async def test_register_user_non_capital_letter_password(client):
             "password": "!testpassword123",
         }
     )
-
     assert response.status_code == 400
 
-
+@pytest.mark.auth
 @pytest.mark.asyncio
-async def test_auth_me_success(client):
+async def test_auth_me_success(client: AsyncClient):
 
     response_login = await user_login_success(client)
     access_token = response_login.json()["access_token"]
@@ -193,109 +185,104 @@ async def test_auth_me_success(client):
     assert "role" in result
     assert "password_hash" not in result
 
-
+@pytest.mark.auth
 @pytest.mark.negative
-async def test_auth_me_no_token(client):
-
+async def test_auth_me_no_token(client: AsyncClient):
     response = await client.get(
         url=f"{base_path}/me"
     )
+    parse_error_detail(
+        response=response,
+        expected_status_code=401,
+        message_error="Not authenticated"
+    )
 
-    assert response.status_code == 401
-
-    result = response.json()
-
-    assert "detail" in result
-    assert result["detail"] == "Not authenticated"
-
-
+@pytest.mark.auth
 @pytest.mark.negative
-async def test_auth_me_invalid_token(client):
-
+async def test_auth_me_invalid_token(client: AsyncClient):
     response = await client.get(
         url=f"{base_path}/me",
         headers={
             "Authorization": f"Bearer invalid token"
         }
     )
+    parse_error_detail(
+        response=response,
+        expected_status_code=401,
+        message_error="Could not validate token"
+    )
 
-    assert response.status_code == 401
-
-    result = response.json()
-
-    assert "detail" in result
-    assert result["detail"] == "Could not validate token"
-
-
+@pytest.mark.auth
 @pytest.mark.negative
-async def test_auth_me_expired_token(client):
+async def test_auth_me_expired_token(client: AsyncClient):
     expired_payload = {
         "sub": "test@example.ru",
         "exp": datetime.now(timezone.utc) - timedelta(minutes=10)
     }
-
     access_token = jwt.encode(
         expired_payload,
         settings.secret_key,
         algorithm=settings.algorithm
     )
-
     response = await client.get(
         url=f"{base_path}/me",
         headers={
             "Authorization": f"Bearer {access_token}"
         }
     )
+    parse_error_detail(
+        response=response,
+        expected_status_code=401,
+        message_error="Could not validate token"
+    )
 
-    assert response.status_code == 401
-    assert response.json()["detail"] == "Could not validate token"
 
-
+@pytest.mark.auth
 @pytest.mark.negative
-async def test_auth_me_no_email_token(client):
-
+async def test_auth_me_no_email_token(client: AsyncClient):
     payload = {
         "exp": datetime.now(timezone.utc) + timedelta(minutes=10)
     }
-
     access_token = jwt.encode(
         payload,
         settings.secret_key,
         algorithm=settings.algorithm
     )
-
     response = await client.get(
         url=f"{base_path}/me",
         headers={
             "Authorization": f"Bearer {access_token}"
         }
     )
+    parse_error_detail(
+        response=response,
+        expected_status_code=401,
+        message_error="Could not validate token"
+    )
 
-    assert response.status_code == 401
-    assert response.json()["detail"] == "Could not validate token"
 
-
+@pytest.mark.auth
 @pytest.mark.negative
-async def test_auth_me_unknown_user_token(client):
+async def test_auth_me_unknown_user_token(client: AsyncClient):
     payload = {
         "sub": "test@example.ru",
         "exp": datetime.now(timezone.utc) + timedelta(minutes=10)
     }
-
     access_token = jwt.encode(
         payload,
         settings.secret_key,
         algorithm=settings.algorithm
     )
-
     response = await client.get(
         url=f"{base_path}/me",
         headers={
             "Authorization": f"Bearer {access_token}"
         }
     )
-
-    assert response.status_code == 401
-    assert response.json()["detail"] == "Could not validate token"
+    parse_error_detail(
+        response=response,
+        expected_status_code=401,
+        message_error="Could not validate token"
+    )
 
 
