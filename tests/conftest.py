@@ -65,6 +65,14 @@ async def prepare_database():
             await conn.run_sync(Base.metadata.drop_all)
 
 
+@pytest_asyncio.fixture(
+    scope="session",
+    autouse=True
+)
+async def dispose_test_engine(prepare_database):
+    yield
+    await test_engine.dispose()
+
 
 @pytest_asyncio.fixture
 async def db_session(prepare_database):
