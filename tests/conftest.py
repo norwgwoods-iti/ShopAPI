@@ -168,11 +168,13 @@ async def products(db_session):
 
 """ Create user and GET token """
 @pytest_asyncio.fixture()
-async def auth_client(db_session, client):
-    user_info={
-        "email": "test@example.ru",
-        "password": "!TestPassword123",
-        "role": UserRole.USER
+async def post_product_payload(category):
+    return {
+        "name": "Футболка",
+        "description": "Шляпа",
+        "category_id": category.id,
+        "price": "1000.00",
+        "stock": 100,
     }
     user = UserModel(
         email=user_info["email"],
