@@ -2,13 +2,17 @@ from datetime import datetime
 from decimal import Decimal
 
 import pytest
+from httpx import AsyncClient
 
 from tests.utils import parse_error_detail, patch_and_parse
 
 base_path = "/api/v1/products"
 
 @pytest.mark.update_product
-async def test_update_product_response_type(admin_client, products):
+async def test_update_product_response_contract(
+        admin_client: AsyncClient,
+        products
+):
     product = products[0]
     payload = {
         "name": "Test Update Product",
@@ -31,8 +35,12 @@ async def test_update_product_response_type(admin_client, products):
     assert isinstance(parsed.is_active, bool)
     assert isinstance(parsed.created_at, datetime)
 
+
 @pytest.mark.update_product
-async def test_update_product_price_keeps_two_decimals(admin_client, products):
+async def test_update_product_price_keeps_two_decimals(
+        admin_client: AsyncClient,
+        products
+):
     product = products[0]
     parsed = await patch_and_parse(
         admin_client=admin_client,
@@ -43,8 +51,12 @@ async def test_update_product_price_keeps_two_decimals(admin_client, products):
     )
     assert parsed.price.as_tuple().exponent == -2
 
+
 @pytest.mark.update_product
-async def test_update_product_datetime_is_aware(admin_client, products):
+async def test_update_product_datetime_is_aware(
+        admin_client: AsyncClient,
+        products
+):
     product = products[0]
     parsed = await patch_and_parse(
         admin_client=admin_client,
@@ -57,7 +69,10 @@ async def test_update_product_datetime_is_aware(admin_client, products):
 
 
 @pytest.mark.update_product
-async def test_update_product_success(admin_client, products):
+async def test_update_product_success(
+        admin_client: AsyncClient,
+        products
+):
     product = products[0]
     payload = {
         "name": "Test Update Product",
@@ -107,7 +122,6 @@ async def test_update_fields(
             payload_field: payload_value
         },
     )
-
     for field, value in parsed.model_dump().items():
         if payload_field == field:
             assert value == payload_value
@@ -117,7 +131,10 @@ async def test_update_fields(
 
 @pytest.mark.update_product
 @pytest.mark.negative
-async def test_update_product_invalid_id(admin_client, products):
+async def test_update_product_invalid_id(
+        admin_client: AsyncClient,
+        products
+):
     product_id = "invalid-id"
     response = await admin_client.patch(
         url=f"{base_path}/{product_id}",
@@ -132,7 +149,10 @@ async def test_update_product_invalid_id(admin_client, products):
 
 @pytest.mark.update_product
 @pytest.mark.negative
-async def test_update_product_incorrect_id(admin_client, products):
+async def test_update_product_incorrect_id(
+        admin_client: AsyncClient,
+        products
+):
     product_id = 9999999
     response = await admin_client.patch(
         url=f"{base_path}/{product_id}",
@@ -149,7 +169,10 @@ async def test_update_product_incorrect_id(admin_client, products):
 
 @pytest.mark.update_product
 @pytest.mark.negative
-async def test_update_product_empty_data(admin_client, products):
+async def test_update_product_empty_data(
+        admin_client: AsyncClient,
+        products
+):
     product = products[0]
     response = await admin_client.patch(
         url=f"{base_path}/{product.id}",
@@ -208,11 +231,16 @@ async def test_update_product_invalid_token(
 
 @pytest.mark.update_product
 @pytest.mark.negative
-async def test_update_product_no_admin_token(auth_client, products):
-    product = products[0]
+async def test_update_product_user_token(
+        auth_client: AsyncClient,
+        product
+):
+    product = product
     response = await auth_client.patch(
         url=f"{base_path}/{product.id}",
-        json={}
+        json={
+            "name": "Test Update Product",
+        }
     )
     parse_error_detail(
         response=response,
