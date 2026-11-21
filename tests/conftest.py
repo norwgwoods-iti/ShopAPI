@@ -72,13 +72,14 @@ async def db_session(prepare_database):
         yield session
 
 
-@pytest_asyncio.fixture(
-    scope="session",
-    autouse=True
-)
-async def dispose_test_engine():
-    yield
-    await test_engine.dispose()
+@pytest_asyncio.fixture()
+async def category(db_session):
+    category = CategoryModel(
+        name="Test category",
+        slug="test-category",
+    )
+    db_session.add(category)
+    await db_session.commit()
 
 # @pytest_asyncio.fixture()
 # async def category(db_session):
