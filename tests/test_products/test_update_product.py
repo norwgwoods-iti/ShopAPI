@@ -162,6 +162,50 @@ async def test_update_product_empty_data(admin_client, products):
     )
 
 
+""" Authorization Check """
+@pytest.mark.update_product
+@pytest.mark.negative
+async def test_update_product_unauthorized(
+        client: AsyncClient,
+        product,
+):
+    product = product
+    response = await client.patch(
+        url=f"{base_path}/{product.id}",
+        json={
+            "name": "Test Update Product",
+        }
+    )
+    parse_error_detail(
+        response=response,
+        expected_status_code=401,
+        message_error="Not authenticated"
+    )
+
+
+@pytest.mark.update_product
+@pytest.mark.negative
+async def test_update_product_invalid_token(
+        client: AsyncClient,
+        product
+):
+    product = product
+    response = await client.patch(
+        url=f"{base_path}/{product.id}",
+        json={
+            "name": "Test Update Product",
+        },
+        headers={
+            "Authorization": "invalid-token"
+        }
+    )
+    parse_error_detail(
+        response=response,
+        expected_status_code=401,
+        message_error="Not authenticated"
+    )
+
+
 @pytest.mark.update_product
 @pytest.mark.negative
 async def test_update_product_no_admin_token(auth_client, products):
