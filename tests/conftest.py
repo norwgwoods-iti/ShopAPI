@@ -27,7 +27,6 @@ def pytest_asyncio_loop_factories(
     return {"default": asyncio.new_event_loop}
 
 
-
 test_engine =  create_async_engine(settings.test_database_url)
 
 TestSession = async_sessionmaker(
@@ -48,9 +47,7 @@ async def app_override(db_session):
 
 
 @pytest_asyncio.fixture
-async def client():
-    app.dependency_overrides[get_session] = override_get_session
-
+async def client(app_override):
     try:
         async with AsyncClient(
             transport=ASGITransport(app=app),
@@ -151,6 +148,7 @@ async def admin_client(
 @pytest_asyncio.fixture(scope="session", autouse=True)
 async def prepare_database():
     async with test_engine.begin() as conn:
+        await conn.run_sync(Base.metadata.drop_all)
         await conn.run_sync(Base.metadata.create_all)
     try:
         yield
@@ -193,29 +191,14 @@ async def category(db_session):
     db_session.add(category)
     await db_session.commit()
 
-# @pytest_asyncio.fixture()
-# async def category(db_session):
-#     category = CategoryModel(
-#         name="Test category",
-#         slug="test-category",
-#     )
-#     db_session.add(category)
-#     await db_session.commit()
-#
-#     return category
+    return category
 
 
 @pytest_asyncio.fixture()
 async def product(
         db_session,
+        category
 ):
-    category = CategoryModel(
-        name="Test category",
-        slug="test-category",
-    )
-    db_session.add(category)
-    await db_session.flush()
-
     product = ProductModel(
         category_id=category.id,
         name="Test product",
@@ -230,6 +213,7 @@ async def product(
 
     return product
 
+
 @pytest_asyncio.fixture()
 async def product_hide(
         db_session,
@@ -240,6 +224,7 @@ async def product_hide(
 
     return product
 
+
 @pytest_asyncio.fixture()
 async def products(db_session):
     categories = [
@@ -248,7 +233,6 @@ async def products(db_session):
             slug=f"test-category-{i}",
         ) for i in range(1,6)
     ]
-
     db_session.add_all(categories)
     await db_session.flush()
 
@@ -261,7 +245,6 @@ async def products(db_session):
         (categories[4], 'Test product 6', '6700.23'), # id = 6 | category_id = 5
         (categories[4], 'Test product 2', '4500.09'), # id = 7 | category_id = 5
     ]
-
     products = [
         ProductModel(
             category_id=category.id,
@@ -272,14 +255,12 @@ async def products(db_session):
             is_active=True,
         ) for category, name, price in specs
     ]
-
     db_session.add_all(products)
     await db_session.commit()
 
     return products
 
 
-""" Create user and GET token """
 @pytest_asyncio.fixture()
 async def post_product_payload(category):
     return {
@@ -289,32 +270,8 @@ async def post_product_payload(category):
         "price": "1000.00",
         "stock": 100,
     }
-    user = UserModel(
-        email=user_info["email"],
-        password_hash=hash_password(user_info["password"]),
-        role=user_info["role"]
-    )
-
-    db_session.add(user)
-    await db_session.commit()
-
-    response_log = await client.post(
-        url="/api/v1/auth/login",
-        data={
-            "username": user_info["email"],
-            "password": user_info["password"],
-        }
-    )
-    assert response_log.status_code == 200
-
-    auth_token = response_log.json()["access_token"]
-
-    client.headers["Authorization"] = f"Bearer {auth_token}"
-
-    return client
 
 
-""" Create admin and GET token """
 @pytest_asyncio.fixture()
 async def post_product(
         post_product_payload,
@@ -325,20 +282,4 @@ async def post_product(
         url="/api/v1/products/",
         json=post_product_payload,
     )
-    db_session.add(admin)
-    await db_session.commit()
-
-    response_log = await client.post(
-        url="/api/v1/auth/login",
-        data={
-            "username": admin_info["email"],
-            "password": admin_info["password"],
-        }
-    )
-    assert response_log.status_code == 200
-
-    auth_token = response_log.json()["access_token"]
-
-    client.headers["Authorization"] = f"Bearer {auth_token}"
-
-    return client
+    return response
