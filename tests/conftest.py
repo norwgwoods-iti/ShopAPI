@@ -61,7 +61,94 @@ async def client():
         app.dependency_overrides.clear()
 
 
-@pytest_asyncio.fixture(autouse=True)
+""" Create user and GET token """
+@pytest_asyncio.fixture()
+async def auth_client(
+        db_session,
+        app_override
+):
+    try:
+        async with AsyncClient(
+                transport=ASGITransport(app=app),
+                base_url="http://test",
+        ) as user_connection:
+            user_info={
+                "email": "test@example.ru",
+                "password": "!TestPassword123",
+                "role": UserRole.USER
+            }
+            user = UserModel(
+                email=user_info["email"],
+                password_hash=hash_password(user_info["password"]),
+                role=user_info["role"]
+            )
+
+            db_session.add(user)
+            await db_session.commit()
+
+            response_log = await user_connection.post(
+                url="/api/v1/auth/login",
+                data={
+                    "username": user_info["email"],
+                    "password": user_info["password"],
+                }
+            )
+            assert response_log.status_code == 200
+
+            auth_token = response_log.json()["access_token"]
+
+            user_connection.headers["Authorization"] = f"Bearer {auth_token}"
+
+            yield user_connection
+
+    finally:
+           app.dependency_overrides.clear()
+
+
+""" Create admin and GET token """
+@pytest_asyncio.fixture()
+async def admin_client(
+        db_session,
+        app_override
+):
+    try:
+        async with AsyncClient(
+                transport=ASGITransport(app=app),
+                base_url="http://test",
+        ) as admin_connection:
+            admin_info={
+                "email": "admin@example.ru",
+                "password": "!AdminPassword123",
+                "role": UserRole.ADMIN
+            }
+            admin = UserModel(
+                email=admin_info["email"],
+                password_hash=hash_password(admin_info["password"]),
+                role=admin_info["role"],
+            )
+            db_session.add(admin)
+            await db_session.commit()
+
+            response_log = await admin_connection.post(
+                url="/api/v1/auth/login",
+                data={
+                    "username": admin_info["email"],
+                    "password": admin_info["password"],
+                }
+            )
+            assert response_log.status_code == 200
+
+            auth_token = response_log.json()["access_token"]
+
+            admin_connection.headers["Authorization"] = f"Bearer {auth_token}"
+
+            yield admin_connection
+
+    finally:
+        app.dependency_overrides.clear()
+
+
+@pytest_asyncio.fixture(scope="session", autouse=True)
 async def prepare_database():
     async with test_engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
