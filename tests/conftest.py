@@ -68,8 +68,18 @@ async def prepare_database():
 
 @pytest_asyncio.fixture
 async def db_session(prepare_database):
-    async with TestSession() as session:
+    connection = await test_engine.connect()
+    transaction = await connection.begin()
+    session = TestSession(
+        bind=connection,
+        join_transaction_mode="create_savepoint"
+    )
+    try:
         yield session
+    finally:
+        await session.close()
+        await transaction.rollback()
+        await connection.close()
 
 
 @pytest_asyncio.fixture()
