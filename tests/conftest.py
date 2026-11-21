@@ -35,9 +35,16 @@ TestSession = async_sessionmaker(
     expire_on_commit=False,
 )
 
-async def override_get_session():
-    async with TestSession() as session:
-        yield session
+
+@pytest_asyncio.fixture
+async def app_override(db_session):
+    async def override():
+        yield db_session
+    app.dependency_overrides[get_session] = override
+    try:
+        yield app
+    finally:
+        app.dependency_overrides.clear()
 
 
 @pytest_asyncio.fixture
