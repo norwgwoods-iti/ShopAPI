@@ -6,7 +6,7 @@ from decimal import Decimal
 from httpx import AsyncClient
 
 from tests.schemas import StrictProductResponse
-from tests.utils import parse_product, parse_error_detail
+from tests.utils import parse_product, parse_error_detail, parse_system_error_detail
 
 base_path = "/api/v1/products"
 
@@ -143,12 +143,11 @@ async def test_get_product_no_token(
 @pytest.mark.get_product_id
 @pytest.mark.negative
 async def test_get_product_invalid_token(
-        client: AsyncClient,
+        auth_client: AsyncClient,
         product
 ):
-    product_id = 1
-    response = await client.get(
-        url=f"{base_path}/{product_id}",
+    response = await auth_client.get(
+        url=f"{base_path}/{product.id}",
         headers={
             "Authorization": f"Bearer invalid token"
         }
@@ -157,4 +156,19 @@ async def test_get_product_invalid_token(
         response=response,
         expected_status_code=401,
         message_error="Could not validate token"
+    )
+
+
+@pytest.mark.get_products
+async def test_get_product_admin_token(
+        admin_client: AsyncClient,
+        product
+):
+    response = await admin_client.get(
+        url=f"{base_path}/{product.id}",
+    )
+    parse_product(
+        response=response,
+        schema=StrictProductResponse,
+        status_code=200
     )
