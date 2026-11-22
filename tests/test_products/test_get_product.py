@@ -117,9 +117,11 @@ async def test_get_product_invalid_id(
     response = await auth_client.get(
         url=f"{base_path}/{product_id}",
     )
-    assert response.status_code == 422
-    assert response.headers["Content-Type"].startswith("application/json")
-    assert "detail" in response.json()
+    parse_system_error_detail(
+        response=response,
+        expected_status_code=422,
+        message_error="Input should be a valid integer, unable to parse string as an integer"
+    )
 
 
 """ Authorization Check """
