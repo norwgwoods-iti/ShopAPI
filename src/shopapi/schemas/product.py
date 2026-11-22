@@ -1,6 +1,18 @@
 from datetime import datetime
 from decimal import Decimal
 from pydantic import BaseModel, Field, ConfigDict
+class ProductCreateSchema(BaseModel):
+    name: ProductName
+    description: ProductDescription | None = None
+    category_id: ProductCategoryId
+    price: ProductPrice
+    stock: ProductStock
+    is_active: bool = True
+
+    _empty_to_none = field_validator(
+        "description", mode="before"
+    )(empty_to_none)
+
 
 class ProductResponseSchema(BaseModel):
     id: int
