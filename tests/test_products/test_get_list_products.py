@@ -135,8 +135,12 @@ async def test_get_products_success(
 async def test_check_get_hide_product(
         auth_client: AsyncClient,
         products,
-        product_hide,
+        product,
+        db_session
 ):
+    setattr(product, "is_active", False)
+    await db_session.commit()
+
     response = await auth_client.get(
         url=f"{base_path}/"
     )
@@ -308,7 +312,6 @@ async def test_get_products_filter_invalid_category_id(
         response=response,
         expected_status_code=422,
         message_error="Input should be a valid integer, unable to parse string as an integer",
-        input_value=query_category_id
     )
 
 
@@ -324,13 +327,10 @@ async def test_get_products_filter_category_id_bellow_border(
             "category_id": 0
         }
     )
-    query_category_id = str(response.request.url.params.get("category_id"))
-
     parse_system_error_detail(
         response=response,
         expected_status_code=422,
         message_error="Input should be greater than or equal to 1",
-        input_value=query_category_id
     )
 
 
