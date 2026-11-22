@@ -215,17 +215,6 @@ async def product(
 
 
 @pytest_asyncio.fixture()
-async def product_hide(
-        db_session,
-        product,
-):
-    setattr(product, "is_active", False)
-    await db_session.commit()
-
-    return product
-
-
-@pytest_asyncio.fixture()
 async def products(db_session):
     categories = [
         CategoryModel(
