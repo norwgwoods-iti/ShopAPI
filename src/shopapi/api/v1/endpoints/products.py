@@ -8,6 +8,7 @@ from sqlalchemy.exc import IntegrityError
 
 from shopapi.core.dependencies import CurrentUserDep, CurrentAdminDep
 from shopapi.core.dependencies import SessionDep
+from shopapi.models import CategoryModel
 from shopapi.models.product import ProductModel
 from shopapi.schemas.product import (ProductResponseSchema, ProductListResponseSchema, ProductCreateSchema,
                                      ProductUpdateSchema, ProductStatusUpdateResponseSchema, ProductStatusUpdateSchema)
@@ -63,34 +64,28 @@ async def get_products(
                     "message": "The minimum price must be less than the maximum price"
                 }
             )
-
     query = (
         select(ProductModel)
         .where(ProductModel.is_active.is_(True))
     )
-
     if category_id is not None:
         query = query.where(
             ProductModel.category_id == category_id
     )
-
     if min_price is not None:
         query = query.where(
             ProductModel.price >= min_price
         )
-
     if max_price is not None:
         query = query.where(
             ProductModel.price <= max_price
         )
-
     if search is not None:
         normalized = search.strip()
         if normalized:
             query = query.where(
                 ProductModel.name.ilike(f"%{normalized}%")
             )
-
     sort_column = {
         "price": ProductModel.price,
         "name": ProductModel.name,
@@ -158,6 +153,7 @@ async def create_product(
     await session.refresh(new_product)
     return new_product
 
+
 @router.patch(
     path="/{product_id}",
     response_model=ProductResponseSchema,
@@ -177,7 +173,6 @@ async def update_product(
                 "message": f"Product with id='{product_id}' not found",
             }
         )
-
     update_data = form_data.model_dump(exclude_unset=True)
 
     if "category_id" in update_data:
@@ -197,7 +192,6 @@ async def update_product(
                 "message": "No fields provided for update",
             }
         )
-
     for field, value in update_data.items():
         setattr(product, field, value)
 
@@ -208,7 +202,7 @@ async def update_product(
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail={
-                "message": f"Product with name='{form_data.name}' was not updated",
+                "message": f"Product with id='{product_id}' was not updated",
             }
         ) from e
 
@@ -235,6 +229,7 @@ async def delete_product(
         )
     await session.delete(product)
     await session.commit()
+
 
 @router.patch(
     path="/{product_id}/status",

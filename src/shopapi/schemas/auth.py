@@ -9,8 +9,6 @@ class AuthRequestSchema(BaseModel):
     email: EmailStr
     password: str
 
-    model_config = ConfigDict(from_attributes=True)
-
     @field_validator("password")
     @classmethod
     def validate_password(cls, value):
@@ -26,10 +24,9 @@ class AuthRequestSchema(BaseModel):
         if not re.search(r"[!@#$%^&*()_+=\[{\]};:<>|./?,-]", value):
             errors.append('Пароль должен содержать хотя бы один спецсимвол (!@#$%^&*()_+=:<>|./?,-)')
 
-
         if errors:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
                 detail={
                     'message': 'Пароль не прошел валидацию',
                     'errors': errors
