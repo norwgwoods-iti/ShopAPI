@@ -180,6 +180,16 @@ async def update_product(
 
     update_data = form_data.model_dump(exclude_unset=True)
 
+    if "category_id" in update_data:
+        category = await session.get(CategoryModel, update_data["category_id"])
+
+        if category is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail={
+                    "message": f"Category with id={update_data['category_id']} not found"
+                }
+            )
     if not update_data:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
