@@ -1,6 +1,27 @@
 from datetime import datetime
 from decimal import Decimal
-from pydantic import BaseModel, Field, ConfigDict
+from typing import Annotated
+
+from pydantic import BaseModel, Field, ConfigDict, field_validator, StringConstraints, model_validator
+
+
+ProductName = Annotated[
+    str, StringConstraints(strip_whitespace=True, min_length=1, max_length=200)
+]
+ProductDescription = Annotated[
+    str, StringConstraints(strip_whitespace=True,max_length=3000)
+]
+ProductCategoryId = Annotated[
+    int, Field(gt=0, strict=True),
+]
+ProductPrice = Annotated[
+    Decimal, Field(gt=0)
+]
+ProductStock = Annotated[
+    int, Field(ge=0, strict=True)
+]
+
+
 def empty_to_none(value):
     if isinstance(value, str) and not value.strip():
         return None
@@ -32,6 +53,7 @@ class ProductResponseSchema(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
+
 class ProductListResponseSchema(BaseModel):
     total: int
     page: int
@@ -40,18 +62,12 @@ class ProductListResponseSchema(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
-class ProductCreateSchema(BaseModel):
-    name: str
-    description: str | None = Field(default="Описание(необязательное поле)")
-    category_id: int
-    price: Decimal
-    stock: int
-    is_active: bool = True
 
 class ProductResponseCreateSchema(ProductCreateSchema):
     id: int
 
     model_config = ConfigDict(from_attributes=True)
+
 
 class ProductUpdateSchema(BaseModel):
     name: ProductName | None = None
@@ -81,6 +97,7 @@ class ProductUpdateSchema(BaseModel):
 
 class ProductStatusUpdateSchema(BaseModel):
     is_active: bool
+
 
 class ProductStatusUpdateResponseSchema(BaseModel):
     id: int
