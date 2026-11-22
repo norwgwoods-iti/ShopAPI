@@ -36,11 +36,29 @@ class ProductResponseCreateSchema(ProductCreateSchema):
     model_config = ConfigDict(from_attributes=True)
 
 class ProductUpdateSchema(BaseModel):
-    name: str | None = None
-    description: str | None = None
-    category_id: int | None = None
-    price: Decimal | None = None
-    stock: int  | None = None
+    name: ProductName | None = None
+    description: ProductDescription | None = None
+    category_id: ProductCategoryId | None = None
+    price: ProductPrice | None = None
+    stock: ProductStock | None = None
+
+    _empty_to_none = field_validator(
+        "description", mode="before"
+    )(empty_to_none)
+
+    @model_validator(mode="before")
+    @classmethod
+    def validate_null_fields(cls, data):
+        if not isinstance(data, dict):
+            return data
+
+        nullable_fields = {"description"}
+
+        for field, value in data.items():
+            if field not in nullable_fields and value is None:
+                raise ValueError(f'"{field}" cannot be null')
+
+        return data
 
 
 class ProductStatusUpdateSchema(BaseModel):
