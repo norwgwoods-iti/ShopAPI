@@ -38,16 +38,19 @@ async def test_update_status_product_false(
 @pytest.mark.asyncio
 async def test_update_status_product_true(
         admin_client: AsyncClient,
-        product_hide,
+        product,
         db_session,
 ):
-    assert product_hide.is_active is False
+    setattr(product, "is_active", False)
+    await db_session.commit()
+
+    assert product.is_active is False
 
     payload = {
         "is_active": True,
     }
     response_patch = await admin_client.patch(
-        url=f'{base_path}/{product_hide.id}/status',
+        url=f'{base_path}/{product.id}/status',
         json=payload,
     )
     parsed = parse_product(
@@ -58,7 +61,7 @@ async def test_update_status_product_true(
     assert parsed.is_active is True
 
     response_get = await admin_client.get(
-        f'{base_path}/{product_hide.id}',
+        f'{base_path}/{product.id}',
     )
     result = response_get.json()
     assert result['is_active'] == payload['is_active']
@@ -87,7 +90,6 @@ async def test_update_status_product_invalid_payload(
         response=response,
         expected_status_code=422,
         message_error="Input should be a valid boolean, unable to interpret input",
-        input_value=check_values,
     )
 
 
@@ -113,10 +115,14 @@ async def test_update_status_product_no_body(
 @pytest.mark.negative
 async def test_update_status_unauthorize(
         client: AsyncClient,
-        product_hide,
+        product,
+        db_session
 ):
+    setattr(product, "is_active", False)
+    await db_session.commit()
+
     response = await client.patch(
-        url=f'{base_path}/{product_hide.id}/status',
+        url=f'{base_path}/{product.id}/status',
         json={
             "is_active": True,
         },
@@ -132,10 +138,14 @@ async def test_update_status_unauthorize(
 @pytest.mark.negative
 async def test_update_status_invalid_token(
         client: AsyncClient,
-        product_hide,
+        product,
+        db_session
 ):
+    setattr(product, "is_active", False)
+    await db_session.commit()
+
     response = await client.patch(
-        url=f'{base_path}/{product_hide.id}/status',
+        url=f'{base_path}/{product.id}/status',
         headers={
             "Authorization": "invalid-token",
         },
@@ -154,10 +164,14 @@ async def test_update_status_invalid_token(
 @pytest.mark.negative
 async def test_update_status_with_user_token(
         auth_client: AsyncClient,
-        product_hide,
+        product,
+        db_session
 ):
+    setattr(product, "is_active", False)
+    await db_session.commit()
+
     response = await auth_client.patch(
-        url=f'{base_path}/{product_hide.id}/status',
+        url=f'{base_path}/{product.id}/status',
         json={
             "is_active": True,
         },
