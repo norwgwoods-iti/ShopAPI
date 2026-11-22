@@ -1,6 +1,12 @@
 from datetime import datetime
 from decimal import Decimal
 from pydantic import BaseModel, Field, ConfigDict
+def empty_to_none(value):
+    if isinstance(value, str) and not value.strip():
+        return None
+    return value
+
+
 class ProductCreateSchema(BaseModel):
     name: ProductName
     description: ProductDescription | None = None
