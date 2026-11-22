@@ -134,6 +134,14 @@ async def create_product(
 ):
     new_product = ProductModel(**product.model_dump())
 
+    category = await session.get(CategoryModel, new_product.category_id)
+    if category is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={
+                "message": f"Category with id={new_product.category_id} not found"
+            }
+        )
     session.add(new_product)
 
     try:
