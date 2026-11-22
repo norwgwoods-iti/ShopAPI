@@ -306,8 +306,6 @@ async def test_get_products_filter_invalid_category_id(
             "category_id": "invalid_category_id"
         }
     )
-    query_category_id = str(response.request.url.params.get("category_id"))
-
     parse_system_error_detail(
         response=response,
         expected_status_code=422,
