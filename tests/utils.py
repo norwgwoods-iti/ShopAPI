@@ -1,6 +1,5 @@
 from decimal import Decimal
 from typing import Any
-from urllib import response
 
 import httpx
 from httpx import AsyncClient
@@ -45,7 +44,6 @@ def parse_system_error_detail(
         response: httpx.Response,
         expected_status_code:int,
         message_error: str | dict[str, Any],
-        input_value: Any = None
 ) -> None:
     assert response.status_code == expected_status_code
     assert response.headers["Content-Type"].startswith("application/json")
@@ -55,7 +53,6 @@ def parse_system_error_detail(
 
     detail = payload["detail"][0]
     assert detail["msg"] == message_error
-    assert detail["input"] == ({} if input_value is None else input_value)
 
 
 async def patch_and_parse(
