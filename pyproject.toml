@@ -48,7 +48,8 @@ markers= [
     "post_product: post product",
     "update_product: update product",
     "update_product_status: update product status",
-    "auth: authentificate user"
+    "auth: authentificate user",
+    "delete_product: delete product"
 ]
 
 [tool.prehook]
