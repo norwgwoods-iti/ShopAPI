@@ -110,6 +110,38 @@ async def test_update_status_product_no_body(
     )
 
 
+@pytest.mark.update_product_status
+@pytest.mark.negative
+@pytest.mark.parametrize(
+    "product_id", [
+        pytest.param(1.5, id="product_id-float-value"),
+        pytest.param("test!@#", id="product_id-str-alphabet-and-symbols-value"),
+        pytest.param("   ", id="product_id-whitespace-value"),
+        pytest.param(True, id="product_id-boolean-value"),
+        pytest.param(None, id="product_id-None-value"),
+        pytest.param([], id="product_id-list-value"),
+        pytest.param({}, id="product_id-dict-value")
+    ]
+)
+async def test_update_status_invalid_types_product_id(
+        admin_client: AsyncClient,
+        product,
+        product_id
+):
+    response = await admin_client.patch(
+        url=f"{base_path}/{product_id}/status",
+        json={
+            "is_active": False
+        }
+    )
+    parse_system_error_detail(
+        response=response,
+        expected_status_code=422,
+        message_error="Input should be a valid integer, unable to parse string as an integer"
+    )
+
+
+
 """ Authorization Check """
 @pytest.mark.update_product_status
 @pytest.mark.negative

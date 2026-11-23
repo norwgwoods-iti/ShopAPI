@@ -644,7 +644,6 @@ async def test_patch_product_category_id_success(
         "",
         "   ",
         True,
-
         [],
         {}
     ]
@@ -677,7 +676,6 @@ async def test_patch_product_category_id_incorrect_value(
     payload = {
         "category_id": 99999
     }
-    print(product.name)
     response = await admin_client.patch(
         url=f"{base_path}/{product.id}",
         json=payload
@@ -932,6 +930,37 @@ async def test_patch_product_stock_under_min_value(
     )
 
 
+@pytest.mark.update_product
+@pytest.mark.negative
+@pytest.mark.parametrize(
+    "product_id", [
+        pytest.param(1.5, id="product_id-float-value"),
+        pytest.param("test!@#", id="product_id-str-alphabet-and-symbols-value"),
+        pytest.param("   ", id="product_id-whitespace-value"),
+        pytest.param(True, id="product_id-boolean-value"),
+        pytest.param(None, id="product_id-None-value"),
+        pytest.param([], id="product_id-list-value"),
+        pytest.param({}, id="product_id-dict-value")
+    ]
+)
+async def test_update_product_invalid_types_product_id(
+        admin_client: AsyncClient,
+        product,
+        product_id
+):
+    response = await admin_client.patch(
+        url=f"{base_path}/{product}",
+        json={
+            "name": "Test Update Product",
+        }
+    )
+    parse_system_error_detail(
+        response=response,
+        expected_status_code=422,
+        message_error="Input should be a valid integer, unable to parse string as an integer"
+    )
+
+
 """ Authorization Check """
 @pytest.mark.update_product
 @pytest.mark.negative
@@ -939,7 +968,6 @@ async def test_update_product_unauthorized(
         client: AsyncClient,
         product,
 ):
-    product = product
     response = await client.patch(
         url=f"{base_path}/{product.id}",
         json={

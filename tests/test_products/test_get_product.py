@@ -106,16 +106,26 @@ async def test_get_product_incorrect_id(
     )
 
 
-@pytest.mark.get_product_id
+@pytest.mark.delete_product
 @pytest.mark.negative
-async def test_get_product_invalid_id(
-        auth_client: AsyncClient,
-        product
+@pytest.mark.parametrize(
+    "product_id", [
+        pytest.param(1.5, id="product_id-float-value"),
+        pytest.param("test!@#", id="product_id-str-alphabet-and-symbols-value"),
+        pytest.param("   ", id="product_id-whitespace-value"),
+        pytest.param(True, id="product_id-boolean-value"),
+        pytest.param(None, id="product_id-None-value"),
+        pytest.param([], id="product_id-list-value"),
+        pytest.param({}, id="product_id-dict-value")
+    ]
+)
+async def test_get_product_invalid_types_id(
+        admin_client: AsyncClient,
+        product,
+        product_id
 ):
-    product_id = 'invalid-id'
-
-    response = await auth_client.get(
-        url=f"{base_path}/{product_id}",
+    response = await admin_client.delete(
+        url=f"{base_path}/{product_id}"
     )
     parse_system_error_detail(
         response=response,
@@ -126,7 +136,7 @@ async def test_get_product_invalid_id(
 
 """ Authorization Check """
 @pytest.mark.negative
-async def test_get_product_no_token(
+async def test_get_product_unauthorized(
         client: AsyncClient,
         product
 ):
@@ -149,13 +159,13 @@ async def test_get_product_invalid_token(
     response = await auth_client.get(
         url=f"{base_path}/{product.id}",
         headers={
-            "Authorization": f"Bearer invalid token"
+            "Authorization": "invalid-token"
         }
     )
     parse_error_detail(
         response=response,
         expected_status_code=401,
-        message_error="Could not validate token"
+        message_error="Not authenticated"
     )
 
 
