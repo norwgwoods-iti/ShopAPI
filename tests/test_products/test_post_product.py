@@ -856,8 +856,6 @@ async def test_post_product_is_active_success(
         url=f"{base_path}/",
         json=payload
     )
-    print(response.status_code)
-    print(response.json())
     parsed = parse_product(
         response=response,
         schema=ProductResponseSchema,
