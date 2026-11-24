@@ -2,9 +2,10 @@ import pytest
 from httpx import AsyncClient
 
 from shopapi.schemas.product import ProductStatusUpdateResponseSchema
-from tests.utils import parse_product, parse_system_error_detail, parse_error_detail
+from tests.utils import parse_response_schema, parse_system_error_detail, parse_error_detail
 
 base_path = 'api/v1/products'
+
 
 @pytest.mark.update_product_status
 @pytest.mark.asyncio
@@ -20,7 +21,7 @@ async def test_update_status_product_false(
         f'{base_path}/{product.id}/status',
         json=payload,
     )
-    parsed = parse_product(
+    parsed = parse_response_schema(
         response=response_patch,
         schema=ProductStatusUpdateResponseSchema,
         status_code=200
@@ -53,7 +54,7 @@ async def test_update_status_product_true(
         url=f'{base_path}/{product.id}/status',
         json=payload,
     )
-    parsed = parse_product(
+    parsed = parse_response_schema(
         response=response_patch,
         schema=ProductStatusUpdateResponseSchema,
         status_code=200

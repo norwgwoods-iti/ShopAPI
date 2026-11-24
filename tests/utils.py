@@ -7,7 +7,7 @@ from httpx import AsyncClient
 from shopapi.schemas.product import ProductResponseSchema
 
 
-def parse_product(
+def parse_response_schema(
         *,
         response: httpx.Response,
         schema ,
@@ -72,7 +72,7 @@ async def patch_and_parse(
         url=f"{base_path}/{product_id}",
         json=json_payload
     )
-    return parse_product(
+    return parse_response_schema(
         response=response,
         schema=schema,
         status_code=status_code

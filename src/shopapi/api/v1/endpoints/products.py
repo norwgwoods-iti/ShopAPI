@@ -48,9 +48,9 @@ async def get_product(
 async def get_products(
         session: SessionDep,
         current_user: CurrentUserDep,
+        category_id: int | None = Query(default=None, ge=1),
         page: int = Query(default=1, ge=1),
         page_size: int = Query(default=20, ge=1, le=100),
-        category_id: int | None = Query(default=None, ge=1),
         min_price: Decimal | None = Query(default=None, ge=0),
         max_price: Decimal | None = Query(default=None, ge=0),
         search: str | None = Query(default=None, min_length=1, max_length=100),

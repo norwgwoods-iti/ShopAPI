@@ -6,19 +6,43 @@ from decimal import Decimal
 from httpx import AsyncClient
 
 from tests.schemas import StrictProductResponse
-from tests.utils import parse_product, parse_error_detail, parse_system_error_detail
+from tests.utils import parse_response_schema, parse_error_detail, parse_system_error_detail
 
 base_path = "/api/v1/products"
 
+
 @pytest.mark.get_product_id
-async def test_get_product_response_type(
+async def test_get_product_success_id(
+        auth_client: AsyncClient,
+        product
+):
+    response = await auth_client.get(
+         url=f"{base_path}/{product.id}",
+    )
+    parsed = parse_response_schema(
+        response=response,
+        schema=StrictProductResponse,
+        status_code=200
+    )
+    assert parsed.id == product.id
+    assert parsed.category_id == product.category_id
+    assert parsed.name == product.name
+    assert parsed.description == product.description
+    assert parsed.stock == product.stock
+    assert parsed.is_active == product.is_active
+    assert parsed.price == Decimal(str(product.price))
+    assert parsed.created_at == product.created_at
+
+
+@pytest.mark.get_product_id
+async def test_get_product_response_contract(
         auth_client: AsyncClient,
         product
 ):
     response = await auth_client.get(
         url=f"{base_path}/{product.id}",
     )
-    parsed = parse_product(
+    parsed = parse_response_schema(
         response=response,
         schema=StrictProductResponse,
         status_code=200
@@ -41,7 +65,7 @@ async def test_get_product_price_keeps_two_decimals(
     response = await auth_client.get(
         url=f"{base_path}/{product.id}",
     )
-    parsed = parse_product(
+    parsed = parse_response_schema(
         response=response,
         schema=StrictProductResponse,
         status_code=200
@@ -57,35 +81,12 @@ async def test_get_product_datetime_is_aware(
     response = await auth_client.get(
         url=f"{base_path}/{product.id}",
     )
-    parsed = parse_product(
+    parsed = parse_response_schema(
         response=response,
         schema=StrictProductResponse,
         status_code=200
     )
     assert parsed.created_at.tzinfo is not None
-
-
-@pytest.mark.get_product_id
-async def test_get_product_success_id(
-        auth_client: AsyncClient,
-        product
-):
-    response = await auth_client.get(
-         url=f"{base_path}/{product.id}",
-    )
-    parsed = parse_product(
-        response=response,
-        schema=StrictProductResponse,
-        status_code=200
-    )
-    assert parsed.id == product.id
-    assert parsed.category_id == product.category_id
-    assert parsed.name == product.name
-    assert parsed.description == product.description
-    assert parsed.stock == product.stock
-    assert parsed.is_active == product.is_active
-    assert Decimal(parsed.price) == Decimal(product.price)
-    assert parsed.created_at == product.created_at
 
 
 @pytest.mark.get_product_id
@@ -177,7 +178,7 @@ async def test_get_product_admin_token(
     response = await admin_client.get(
         url=f"{base_path}/{product.id}",
     )
-    parse_product(
+    parse_response_schema(
         response=response,
         schema=StrictProductResponse,
         status_code=200

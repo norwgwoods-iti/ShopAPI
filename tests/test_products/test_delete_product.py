@@ -60,7 +60,7 @@ async def test_delete_product_incorrect_id(
         pytest.param({}, id="product_id-dict-value")
     ]
 )
-async def test_delete_product_invalid_types_product_id(
+async def test_delete_product_id_invalid_types(
         admin_client: AsyncClient,
         product,
         product_id

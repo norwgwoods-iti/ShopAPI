@@ -8,18 +8,32 @@ from sqlalchemy import select
 from shopapi.models import ProductModel
 from shopapi.schemas.product import ProductResponseSchema
 from tests.conftest import db_session
-from tests.utils import parse_product, parse_error_detail, parse_system_error_detail
+from tests.utils import parse_response_schema, parse_error_detail, parse_system_error_detail
 
 base_path = "/api/v1/products"
 
 
-@pytest.mark.post_product
-async def test_post_product_response_type(
-        admin_client: AsyncClient,
-        post_product
+async def _post_product(
+        client,
+        payload,
 ):
-    response = post_product
-    parsed = parse_product(
+    response = await client.post(
+        url="/api/v1/products/",
+        json=payload,
+    )
+    return response
+
+
+@pytest.mark.post_product
+async def test_post_product_response_contract(
+        admin_client: AsyncClient,
+        post_product_payload
+):
+    response = await _post_product(
+        admin_client,
+        post_product_payload
+    )
+    parsed = parse_response_schema(
         response=response,
         schema=ProductResponseSchema,
         status_code=201
@@ -37,10 +51,13 @@ async def test_post_product_response_type(
 @pytest.mark.post_product
 async def test_post_product_price_keeps_two_decimals(
         admin_client: AsyncClient,
-        post_product
+        post_product_payload
 ):
-    response = post_product
-    parsed = parse_product(
+    response = await _post_product(
+        admin_client,
+        post_product_payload
+    )
+    parsed = parse_response_schema(
         response=response,
         schema=ProductResponseSchema,
         status_code=201
@@ -51,10 +68,13 @@ async def test_post_product_price_keeps_two_decimals(
 @pytest.mark.get_product_id
 async def test_post_product_datetime_is_aware(
         admin_client: AsyncClient,
-        post_product
+        post_product_payload
 ):
-    response = post_product
-    parsed = parse_product(
+    response = await _post_product(
+        admin_client,
+        post_product_payload
+    )
+    parsed = parse_response_schema(
         response=response,
         schema=ProductResponseSchema,
         status_code=201
@@ -65,12 +85,14 @@ async def test_post_product_datetime_is_aware(
 @pytest.mark.post_product
 async def test_post_product_success_payload(
         admin_client: AsyncClient,
-        post_product,
         post_product_payload,
         db_session
 ):
-    response = post_product
-    parsed = parse_product(
+    response = await _post_product(
+        admin_client,
+        post_product_payload
+    )
+    parsed = parse_response_schema(
         response=response,
         schema=ProductResponseSchema,
         status_code=201
@@ -95,19 +117,21 @@ async def test_post_product_success_payload(
 @pytest.mark.post_product
 async def test_post_product_success_get_response(
         admin_client: AsyncClient,
-        post_product,
+        post_product_payload
 ):
-    response_post = post_product
-
+    response_post = await _post_product(
+        admin_client,
+        post_product_payload
+    )
     response_get = await admin_client.get(
         url=f"{base_path}/{response_post.json()['id']}"
     )
-    parsed_post = parse_product(
+    parsed_post = parse_response_schema(
         response=response_post,
         schema=ProductResponseSchema,
         status_code=201
     )
-    parsed_get = parse_product(
+    parsed_get = parse_response_schema(
         response=response_get,
         schema=ProductResponseSchema,
         status_code=200
@@ -146,7 +170,7 @@ async def test_post_products_name_and_desc_non_alphabetic_chars(
         url=f"{base_path}/",
         json=payload
     )
-    parsed = parse_product(
+    parsed = parse_response_schema(
         response=response,
         schema=ProductResponseSchema,
         status_code=201,
@@ -245,7 +269,7 @@ async def test_post_product_name_and_description_whitespace_sides(
         url=f"{base_path}/",
         json=payload
     )
-    parsed = parse_product(
+    parsed = parse_response_schema(
         response=response,
         schema=ProductResponseSchema,
         status_code=201
@@ -275,7 +299,7 @@ async def test_post_product_name_max_length(
         url=f"{base_path}/",
         json=payload
     )
-    parsed = parse_product(
+    parsed = parse_response_schema(
         response=response,
         schema=ProductResponseSchema,
         status_code=201
@@ -324,7 +348,7 @@ async def test_post_product_name_min_length(
         url=f"{base_path}/",
         json=payload
     )
-    parsed = parse_product(
+    parsed = parse_response_schema(
         response=response,
         schema=ProductResponseSchema,
         status_code=201
@@ -356,7 +380,7 @@ async def test_post_product_name_under_min_length(
 # whitespaces
 @pytest.mark.post_product
 @pytest.mark.negative
-async def test_post_product_name_whitespace_sides(
+async def test_post_product_name_space_around(
         admin_client: AsyncClient,
         post_product_payload,
 ):
@@ -368,7 +392,7 @@ async def test_post_product_name_whitespace_sides(
         url=f"{base_path}/",
         json=payload
     )
-    parsed = parse_product(
+    parsed = parse_response_schema(
         response=response,
         schema=ProductResponseSchema,
         status_code=201
@@ -419,7 +443,7 @@ async def test_post_product_description_max_length(
         url=f"{base_path}/",
         json=payload
     )
-    parsed = parse_product(
+    parsed = parse_response_schema(
         response=response,
         schema=ProductResponseSchema,
         status_code=201
@@ -461,7 +485,7 @@ async def test_post_product_description_min_length(
         url=f"{base_path}/",
         json=payload
     )
-    parsed = parse_product(
+    parsed = parse_response_schema(
         response=response,
         schema=ProductResponseSchema,
         status_code=201
@@ -491,7 +515,7 @@ async def test_post_product_description_none(
         url=f"{base_path}/",
         json=payload
     )
-    parsed = parse_product(
+    parsed = parse_response_schema(
         response=response,
         schema=ProductResponseSchema,
         status_code=201
@@ -515,7 +539,7 @@ async def test_post_product_category_id_success(
         url=f"{base_path}/",
         json=payload
     )
-    parsed = parse_product(
+    parsed = parse_response_schema(
         response=response,
         schema=ProductResponseSchema,
         status_code=201
@@ -631,7 +655,7 @@ async def test_post_product_price_success(
         url=f"{base_path}/",
         json=payload
     )
-    parsed = parse_product(
+    parsed = parse_response_schema(
         response=response,
         schema=ProductResponseSchema,
         status_code=201
@@ -740,7 +764,7 @@ async def test_post_product_stock_success(
         url=f"{base_path}/",
         json=payload
     )
-    parsed = parse_product(
+    parsed = parse_response_schema(
         response=response,
         schema=ProductResponseSchema,
         status_code=201
@@ -804,7 +828,7 @@ async def test_post_product_stock_min_value(
         url=f"{base_path}/",
         json=payload
     )
-    parsed = parse_product(
+    parsed = parse_response_schema(
         response=response,
         schema=ProductResponseSchema,
         status_code=201
@@ -856,7 +880,7 @@ async def test_post_product_is_active_success(
         url=f"{base_path}/",
         json=payload
     )
-    parsed = parse_product(
+    parsed = parse_response_schema(
         response=response,
         schema=ProductResponseSchema,
         status_code=201
