@@ -20,8 +20,8 @@ class CartListResponseSchema(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 class CartItemCreateSchema(BaseModel):
-    product_id: int = Field(gt=0)
-    quantity: int = Field(default=1, gt=0)
+    product_id: int = Field(gt=0, strict=True)
+    quantity: int = Field(default=1, gt=0, strict=True)
 
 class CartItemUpdateSchema(BaseModel):
     quantity: int = Field(gt=0)
