@@ -45,11 +45,18 @@ markers= [
     "negative: negative test",
     "get_products: get products",
     "get_product_id: get id product",
-    "post_product: post product",
+    "post_product: add product",
     "update_product: update product",
     "update_product_status: update product status",
+    "delete_product: delete product",
+
     "auth: authentificate user",
-    "delete_product: delete product"
+
+    "delete_cart_item: delete item in cart",
+    "get_cart: get cart",
+    "post_cart: add product to cart",
+    "update_cart_item: update cart item"
+
 ]
 
 [tool.prehook]
