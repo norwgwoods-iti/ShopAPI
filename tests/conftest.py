@@ -2,6 +2,7 @@ from decimal import Decimal
 
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
 
 from shopapi.core.config import settings
@@ -9,7 +10,7 @@ from shopapi.core.security import hash_password
 from shopapi.db.base import Base
 from shopapi.db.session import get_session
 from shopapi.main import app
-from shopapi.models import CategoryModel, ProductModel, UserModel
+from shopapi.models import CategoryModel, ProductModel, UserModel, CartModel
 
 import asyncio
 import sys
@@ -261,14 +262,53 @@ async def post_product_payload(category):
     }
 
 
+# @pytest_asyncio.fixture()
+# async def post_cart_one_product(
+#         auth_client: AsyncClient,
+#         product,
+#         db_session
+# ) -> None:
+#     user = (
+#         await db_session.execute(
+#             select(UserModel)
+#         )
+#     ).scalar_one_or_none()
+#
+#     new_cart = CartModel(
+#         user_id=user.id,
+#         product_id=product.id,
+#         quantity=5,
+#     )
+#     db_session.add(new_cart)
+#     await db_session.commit()
+
+
+# @pytest_asyncio.fixture()
+# async def post_cart_many_products(
+#         auth_client: AsyncClient,
+#         products,
+#         post_cart_payload,
+#         db_session
+# ):
+#     user = (
+#         await db_session.execute(
+#             select(UserModel)
+#         )
+#     ).scalar_one_or_none()
+#     cart = [
+#         CartModel(
+#             user_id=user.id,
+#             product_id=product.id,
+#             quantity=post_cart_payload["quantity"],
+#         ) for product in products
+#     ]
+#     db_session.add_all(cart)
+#     await db_session.commit()
+
+
 @pytest_asyncio.fixture()
-async def post_product(
-        post_product_payload,
-        admin_client,
-        category
-):
-    response = await admin_client.post(
-        url="/api/v1/products/",
-        json=post_product_payload,
-    )
-    return response
+async def post_cart_payload(product):
+    return {
+        "product_id": product.id,
+        "quantity": 5,
+    }
