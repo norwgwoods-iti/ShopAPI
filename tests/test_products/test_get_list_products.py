@@ -1,11 +1,13 @@
+from calendar import prcal
 from datetime import datetime
 from decimal import Decimal
+from typing import Any
 
 import pytest
 from httpx import AsyncClient
 
 from tests.schemas import StrictProductListResponse
-from tests.utils import parse_product, parse_error_detail, parse_system_error_detail
+from tests.utils import parse_response_schema, parse_error_detail, parse_system_error_detail
 
 base_path = "/api/v1/products"
 
@@ -17,7 +19,7 @@ async def test_get_products_response_contract(
     response = await auth_client.get(
         url=f"{base_path}/",
     )
-    parsed = parse_product(
+    parsed = parse_response_schema(
         response=response,
         schema=StrictProductListResponse,
         status_code=200
@@ -46,7 +48,7 @@ async def test_get_products_price_keeps_two_decimals(
     response = await auth_client.get(
         url=f"{base_path}/",
     )
-    parsed = parse_product(
+    parsed = parse_response_schema(
         response=response,
         schema=StrictProductListResponse,
         status_code=200
@@ -63,7 +65,7 @@ async def test_get_product_datetime_is_aware(
     response = await auth_client.get(
         url=f"{base_path}/",
     )
-    parsed = parse_product(
+    parsed = parse_response_schema(
         response=response,
         schema=StrictProductListResponse,
         status_code=200
@@ -80,7 +82,7 @@ async def test_get_one_product_success(
     response = await auth_client.get(
         url=f"{base_path}/",
     )
-    parsed = parse_product(
+    parsed = parse_response_schema(
         response=response,
         schema=StrictProductListResponse,
         status_code=200
@@ -90,15 +92,14 @@ async def test_get_one_product_success(
     assert parsed.page_size == 20
     assert len(parsed.items) == parsed.total
 
-    parsed_item = parsed.items[0]
-
-    assert parsed_item.id == product.id
-    assert parsed_item.category_id == product.category_id
-    assert parsed_item.name == product.name
-    assert parsed_item.description == product.description
-    assert Decimal(parsed_item.price) == Decimal(product.price)
-    assert parsed_item.stock == product.stock
-    assert parsed_item.is_active == product.is_active
+    for item in parsed.items:
+        assert item.id == product.id
+        assert item.category_id == product.category_id
+        assert item.name == product.name
+        assert item.description == product.description
+        assert Decimal(item.price) == Decimal(product.price)
+        assert item.stock == product.stock
+        assert item.is_active == product.is_active
 
 
 @pytest.mark.get_products
@@ -109,7 +110,7 @@ async def test_get_products_success(
     response = await auth_client.get(
         url=f"{base_path}/",
     )
-    parsed = parse_product(
+    parsed = parse_response_schema(
         response=response,
         schema=StrictProductListResponse,
         status_code=200
@@ -144,7 +145,7 @@ async def test_check_get_hide_product(
     response = await auth_client.get(
         url=f"{base_path}/"
     )
-    parsed = parse_product(
+    parsed = parse_response_schema(
         response=response,
         schema=StrictProductListResponse,
         status_code=200
@@ -155,7 +156,6 @@ async def test_check_get_hide_product(
     assert set(actual_ids) == set(expected_ids)
 
 
-""" Page Filter """
 @pytest.mark.get_products
 async def test_get_products_filter_empty_page(
         auth_client: AsyncClient,
@@ -167,7 +167,7 @@ async def test_get_products_filter_empty_page(
             "page": 9
         },
     )
-    parsed = parse_product(
+    parsed = parse_response_schema(
         response=response,
         schema=StrictProductListResponse,
         status_code=200
@@ -191,7 +191,7 @@ async def test_get_products_filter_page_size(
             "page_size": 2,
         }
     )
-    parsed = parse_product(
+    parsed = parse_response_schema(
         response=response,
         schema=StrictProductListResponse,
         status_code=200
@@ -220,7 +220,7 @@ async def test_get_products_filter_page_have_product(
         url=f"{base_path}/",
         params=query_params
     )
-    parsed = parse_product(
+    parsed = parse_response_schema(
         response=response,
         schema=StrictProductListResponse,
         status_code=200
@@ -244,7 +244,6 @@ async def test_get_products_filter_category_id(
         auth_client: AsyncClient,
         products
 ):
-
     expend_category_id = products[1].category_id
 
     response = await auth_client.get(
@@ -253,7 +252,7 @@ async def test_get_products_filter_category_id(
             "category_id": expend_category_id,
         }
     )
-    parsed = parse_product(
+    parsed = parse_response_schema(
         response=response,
         schema=StrictProductListResponse,
         status_code=200
@@ -274,65 +273,6 @@ async def test_get_products_filter_category_id(
 
 
 @pytest.mark.get_products
-@pytest.mark.negative
-async def test_get_products_filter_incorrect_category_id(
-        auth_client: AsyncClient,
-        products
-):
-    response = await auth_client.get(
-        url=f"{base_path}/",
-        params={
-            "category_id": 9999999
-        }
-    )
-    parsed = parse_product(
-        response=response,
-        schema=StrictProductListResponse,
-        status_code=200
-    )
-    for item in parsed.items:
-        assert item is None
-
-
-@pytest.mark.get_products
-@pytest.mark.negative
-async def test_get_products_filter_invalid_category_id(
-        auth_client: AsyncClient,
-        products
-):
-    response = await auth_client.get(
-        url=f"{base_path}/",
-        params={
-            "category_id": "invalid_category_id"
-        }
-    )
-    parse_system_error_detail(
-        response=response,
-        expected_status_code=422,
-        message_error="Input should be a valid integer, unable to parse string as an integer",
-    )
-
-
-@pytest.mark.get_products
-@pytest.mark.negative
-async def test_get_products_filter_category_id_bellow_border(
-        auth_client: AsyncClient,
-        products
-):
-    response = await auth_client.get(
-        url=f"{base_path}/",
-        params={
-            "category_id": 0
-        }
-    )
-    parse_system_error_detail(
-        response=response,
-        expected_status_code=422,
-        message_error="Input should be greater than or equal to 1",
-    )
-
-
-@pytest.mark.get_products
 async def test_get_products_filter_min_price(
         auth_client: AsyncClient,
         products
@@ -343,7 +283,7 @@ async def test_get_products_filter_min_price(
             "min_price": 2000.00,
         }
     )
-    parsed = parse_product(
+    parsed = parse_response_schema(
         response=response,
         schema=StrictProductListResponse,
         status_code=200
@@ -374,7 +314,7 @@ async def test_get_products_filter_max_price(
             "max_price": 1200.00,
         }
     )
-    parsed = parse_product(
+    parsed = parse_response_schema(
         response=response,
         schema=StrictProductListResponse,
         status_code=200
@@ -407,7 +347,7 @@ async def test_get_products_filter_min_max_price(
         url=f"{base_path}/",
         params=query_params
     )
-    parsed = parse_product(
+    parsed = parse_response_schema(
         response=response,
         schema=StrictProductListResponse,
         status_code=200
@@ -454,7 +394,7 @@ async def test_get_products_sorting(
         url=f"{base_path}/",
         params=query_params
     )
-    parsed = parse_product(
+    parsed = parse_response_schema(
         response=response,
         schema=StrictProductListResponse,
         status_code=200
@@ -480,44 +420,119 @@ async def test_get_products_sorting(
     assert actual_ids == expected_ids
 
 
+""" Check Field category_id/page/page_size """
 @pytest.mark.get_products
 @pytest.mark.negative
-async def test_get_product_filter_page_bellow_border(auth_client):
+@pytest.mark.parametrize(
+    "query_name, query_value", [
+
+        pytest.param("category_id", 1.5, id="category_id-float-value"),
+        pytest.param("category_id", "test!@#", id="category_id-string-value"),
+        pytest.param("category_id", "", id="category_id-empty-str-value"),
+        pytest.param("category_id", "   ", id="category_id-whitespace-only-value"),
+        pytest.param("category_id", True, id="category_id-boolean-value"),
+        pytest.param("category_id", None, id="category_id-None-value"),
+        pytest.param("category_id", "null", id="category_id-json-null-value"),
+        pytest.param("category_id", {}, id="category_id-dict-value"),
+
+        pytest.param("page", 1.5, id="page-float-value"),
+        pytest.param("page", "test!@#", id="page-string-value"),
+        pytest.param("page", "", id="page-empty-str-value"),
+        pytest.param("page", "   ", id="page-whitespace-only-value"),
+        pytest.param("page", True, id="page-boolean-value"),
+        pytest.param("page", None, id="page-None-value"),
+        pytest.param("page", "null", id="page-json-null-value"),
+        pytest.param("page", {}, id="page-dict-value"),
+
+        pytest.param("page_size", 1.5, id="page_size-float-value"),
+        pytest.param("page_size", "test!@#", id="page_size-string-value"),
+        pytest.param("page_size", "", id="page_size-empty-str-value"),
+        pytest.param("page_size", "   ", id="page_size-whitespace-only-value"),
+        pytest.param("page_size", True, id="page_size-boolean-value"),
+        pytest.param("page_size", None, id="page_size-None-value"),
+        pytest.param("page_size", "null", id="page_size-json-null-value"),
+        pytest.param("page_size", {}, id="page_size-dict-value"),
+    ]
+)
+async def test_get_product_filter_field_category_page_psize_types(
+        auth_client: AsyncClient,
+        products,
+        query_name:Any,
+        query_value:Any
+):
     response = await auth_client.get(
         url=f"{base_path}/",
         params={
-            "page": 0
+            query_name: query_value
         }
     )
-    assert response.status_code == 422
+    parse_system_error_detail(
+        response=response,
+        expected_status_code=422,
+        message_error="Input should be a valid integer, unable to parse string as an integer",
+    )
 
 
 @pytest.mark.get_products
 @pytest.mark.negative
-async def test_get_product_filter_invalid_page(auth_client):
+@pytest.mark.parametrize(
+    "query_name, query_value", [
+
+            pytest.param("category_id", 0, id="category_id-zero-value"),
+            pytest.param("category_id", -1, id="category_id-negative-value"),
+
+            pytest.param("page", 0, id="page-zero-value"),
+            pytest.param("page", -1, id="page-negative-value"),
+
+            pytest.param("page_size", 0, id="page_size-zero-value"),
+            pytest.param("page_size", -1, id="page_size-negative-value"),
+
+    ]
+)
+async def test_get_products_filter_category_page_psize_under_min_value(
+        auth_client: AsyncClient,
+        products,
+        query_name:str,
+        query_value:int
+):
     response = await auth_client.get(
         url=f"{base_path}/",
         params={
-            "page": "invalid-page"
+            query_name: query_value
         }
     )
-    assert response.status_code == 422
+    parse_system_error_detail(
+        response=response,
+        expected_status_code=422,
+        message_error="Input should be greater than or equal to 1",
+    )
 
 
+""" Check Field category_id """
 @pytest.mark.get_products
 @pytest.mark.negative
-async def test_get_product_filter_page_size_bellow_border(auth_client):
+async def test_get_products_filter_incorrect_category_id(
+        auth_client: AsyncClient,
+        products
+):
     response = await auth_client.get(
         url=f"{base_path}/",
         params={
-            "page_size": 0
+            "category_id": 9999999
         }
     )
-    assert response.status_code == 422
+    parsed = parse_response_schema(
+        response=response,
+        schema=StrictProductListResponse,
+        status_code=200
+    )
+    for item in parsed.items:
+        assert item is None
 
 
+""" Check Field page_size """
 @pytest.mark.get_products
-async def test_get_product_filter_page_size_on_border(
+async def test_get_product_filter_page_size_max(
         auth_client: AsyncClient,
         products
 ):
@@ -527,7 +542,7 @@ async def test_get_product_filter_page_size_on_border(
             "page_size": 100
         }
     )
-    parsed = parse_product(
+    parsed = parse_response_schema(
         response=response,
         schema=StrictProductListResponse,
         status_code=200
@@ -545,7 +560,7 @@ async def test_get_product_filter_page_size_on_border(
 
 @pytest.mark.get_products
 @pytest.mark.negative
-async def test_get_product_filter_page_size_above_border(auth_client):
+async def test_get_product_filter_page_size_exceeds_max(auth_client):
     response = await auth_client.get(
         url=f"{base_path}/",
         params={
@@ -555,149 +570,76 @@ async def test_get_product_filter_page_size_above_border(auth_client):
     assert response.status_code == 422
 
 
+""" Check Field min_price/max_price """
 @pytest.mark.get_products
 @pytest.mark.negative
-async def test_get_product_filter_invalid_page_size(auth_client):
-    response = await auth_client.get(
-        url=f"{base_path}/",
-        params={
-            "page_size": "invalid-page_size"
-        }
-    )
-    assert response.status_code == 422
+@pytest.mark.parametrize(
+    "query_name, query_value", [
 
+        pytest.param("min_price", "test!@#", id="min_price-string-value"),
+        pytest.param("min_price", "", id="min_price-empty-str-value"),
+        pytest.param("min_price", "   ", id="min_price-whitespace-only-value"),
+        pytest.param("min_price", True, id="min_price-boolean-value"),
+        pytest.param("min_price", None, id="min_price-None-value"),
+        pytest.param("min_price", "null", id="min_price-json-null-value"),
+        pytest.param("min_price", {}, id="min_price-dict-value"),
 
-@pytest.mark.get_products
-@pytest.mark.negative
-async def test_get_product_filter_category_id_bellow_border(auth_client):
-    response = await auth_client.get(
-        url=f"{base_path}/",
-        params={
-            "category_id": 0
-        }
-    )
-    assert response.status_code == 422
+        pytest.param("max_price", "test!@#", id="max_price-string-value"),
+        pytest.param("max_price", "", id="max_price-empty-str-value"),
+        pytest.param("max_price", "   ", id="max_price-whitespace-only-value"),
+        pytest.param("max_price", True, id="max_price-boolean-value"),
+        pytest.param("max_price", None, id="max_price-None-value"),
+        pytest.param("max_price", "null", id="max_price-json-null-value"),
+        pytest.param("max_price", {}, id="max_price-dict-value"),
 
-
-@pytest.mark.get_products
-@pytest.mark.negative
-async def test_get_product_filter_invalid_category_id(auth_client):
-    response = await auth_client.get(
-        url=f"{base_path}/",
-        params={
-            "category_id": "invalid-category_id"
-        }
-    )
-    assert response.status_code == 422
-
-
-@pytest.mark.get_products
-@pytest.mark.negative
-async def test_get_product_filter_min_price_bellow_border(auth_client):
-    response = await auth_client.get(
-        url=f"{base_path}/",
-        params={
-            "min_price": -1
-        }
-    )
-    assert response.status_code == 422
-
-
-@pytest.mark.get_products
-async def test_get_product_filter_min_price_on_border(
+    ]
+)
+async def test_get_product_filter_field_min_max_price_types(
         auth_client: AsyncClient,
-        products
+        products,
+        query_name:Any,
+        query_value:Any
 ):
     response = await auth_client.get(
         url=f"{base_path}/",
         params={
-            "min_price": 0.00
+            query_name: query_value
         }
     )
-    parsed = parse_product(
+    parse_system_error_detail(
         response=response,
-        schema=StrictProductListResponse,
-        status_code=200
+        expected_status_code=422,
+        message_error="Input should be a valid decimal"
     )
-    query_min_price = Decimal(response.request.url.params.get("min_price"))
-
-    expected_ids = [p.id for p in products if p.price >= query_min_price]
-    actual_ids = [p.id for p in parsed.items]
-    assert set(actual_ids) == set(expected_ids)
-
-    assert parsed.total == len(expected_ids)
-    assert parsed.page == 1
-    assert parsed.page_size == 20
-    if parsed.total >= parsed.page_size:
-        assert len(parsed.items) == parsed.page_size
-    else:
-        assert len(parsed.items) == len(expected_ids)
-
-
-@pytest.mark.get_products
-async def test_get_product_filter_invalid_min_price(auth_client):
-    response = await auth_client.get(
-        url=f"{base_path}/",
-        params={
-            "min_price": "invalid-min-price"
-        }
-    )
-    assert response.status_code == 422
 
 
 @pytest.mark.get_products
 @pytest.mark.negative
-async def test_get_product_max_price_bellow_border(auth_client):
-    response = await auth_client.get(
-        url=f"{base_path}/",
-        params={
-            "max_price": -1
-        }
-    )
-    assert response.status_code == 422
+@pytest.mark.parametrize(
+    "query_name, query_value", [
 
+            pytest.param("min_price", -1, id="min_price-negative-value"),
 
-@pytest.mark.get_products
-async def test_get_product_max_price_on_border(
+            pytest.param("max_price", -1, id="max_price-negative-value"),
+    ]
+)
+async def test_get_products_filter_price_under_min_value(
         auth_client: AsyncClient,
-        products
+        products,
+        query_name:str,
+        query_value:int
 ):
     response = await auth_client.get(
         url=f"{base_path}/",
         params={
-            "max_price": 0.00
+            query_name: query_value
         }
     )
-    parsed = parse_product(
+    parse_system_error_detail(
         response=response,
-        schema=StrictProductListResponse,
-        status_code=200
+        expected_status_code=422,
+        message_error="Input should be greater than or equal to 0",
     )
-    query_max_price = Decimal(response.request.url.params.get("max_price"))
-
-    expected_ids = [p.id for p in products if p.price <= query_max_price]
-    actual_ids = [p.id for p in parsed.items]
-    assert set(actual_ids) == set(expected_ids)
-
-    assert parsed.total == len(expected_ids)
-    assert parsed.page == 1
-    assert parsed.page_size == 20
-    if parsed.total >= parsed.page_size:
-        assert len(parsed.items) == parsed.page_size
-    else:
-        assert len(parsed.items) == len(expected_ids)
-
-
-@pytest.mark.get_products
-async def test_get_product_filter_invalid_max_price(auth_client):
-    response = await auth_client.get(
-        url=f"{base_path}/",
-        params={
-            "max_price": "invalid-min-price"
-        }
-    )
-    assert response.status_code == 422
-
 
 @pytest.mark.get_products
 @pytest.mark.negative
@@ -730,7 +672,7 @@ async def test_get_product_filter_min_equal_max_price(
         url=f"{base_path}/",
         params=query_params
     )
-    parsed = parse_product(
+    parsed = parse_response_schema(
         response=response,
         schema=StrictProductListResponse,
         status_code=200
@@ -744,7 +686,71 @@ async def test_get_product_filter_min_equal_max_price(
     assert set(actual_ids) == set(expected_ids)
 
 
-""" Search Test """
+""" Check Field min_price """
+@pytest.mark.get_products
+async def test_get_product_filter_min_price_min_value(
+        auth_client: AsyncClient,
+        products
+):
+    response = await auth_client.get(
+        url=f"{base_path}/",
+        params={
+            "min_price": 0.00
+        }
+    )
+    parsed = parse_response_schema(
+        response=response,
+        schema=StrictProductListResponse,
+        status_code=200
+    )
+    query_min_price = Decimal(response.request.url.params.get("min_price"))
+
+    expected_ids = [p.id for p in products if p.price >= query_min_price]
+    actual_ids = [p.id for p in parsed.items]
+    assert set(actual_ids) == set(expected_ids)
+
+    assert parsed.total == len(expected_ids)
+    assert parsed.page == 1
+    assert parsed.page_size == 20
+    if parsed.total >= parsed.page_size:
+        assert len(parsed.items) == parsed.page_size
+    else:
+        assert len(parsed.items) == len(expected_ids)
+
+
+""" Check Field max_price """
+@pytest.mark.get_products
+async def test_get_product_max_price_min_value(
+        auth_client: AsyncClient,
+        products
+):
+    response = await auth_client.get(
+        url=f"{base_path}/",
+        params={
+            "max_price": 0.00
+        }
+    )
+    parsed = parse_response_schema(
+        response=response,
+        schema=StrictProductListResponse,
+        status_code=200
+    )
+    query_max_price = Decimal(response.request.url.params.get("max_price"))
+
+    expected_ids = [p.id for p in products if p.price <= query_max_price]
+    actual_ids = [p.id for p in parsed.items]
+    assert set(actual_ids) == set(expected_ids)
+
+    assert parsed.total == len(expected_ids)
+    assert parsed.page == 1
+    assert parsed.page_size == 20
+    if parsed.total >= parsed.page_size:
+        assert len(parsed.items) == parsed.page_size
+    else:
+        assert len(parsed.items) == len(expected_ids)
+
+
+""" Test Field search """
 @pytest.mark.get_products
 async def test_get_products_filter_search(
         auth_client: AsyncClient,
@@ -758,7 +764,7 @@ async def test_get_products_filter_search(
             "search": search_name,
         }
     )
-    parsed = parse_product(
+    parsed = parse_response_schema(
         response=response,
         schema=StrictProductListResponse,
         status_code=200
@@ -792,7 +798,7 @@ async def test_get_products_filter_search_uppercase(
             "search": search_name.upper(), # "PRODUCT 2"
         }
     )
-    parsed = parse_product(
+    parsed = parse_response_schema(
         response=response,
         schema=StrictProductListResponse,
         status_code=200
@@ -819,7 +825,7 @@ async def test_get_products_filter_search_space_around(
             "search": f" {search_name} ", # " product 2 "
         }
     )
-    parsed = parse_product(
+    parsed = parse_response_schema(
         response=response,
         schema=StrictProductListResponse,
         status_code=200
@@ -835,19 +841,33 @@ async def test_get_products_filter_search_space_around(
 
 @pytest.mark.get_products
 @pytest.mark.negative
-async def test_get_product_filter_search_no_symbol(auth_client):
+@pytest.mark.parametrize(
+    "search", [
+        pytest.param("", id="category_id-empty-str-value"),
+        pytest.param(None, id="category_id-None-value"),
+    ]
+)
+async def test_get_product_filter_search_invalid_types(
+        auth_client: AsyncClient,
+        products,
+        search: Any
+):
     response = await auth_client.get(
         url=f"{base_path}/",
         params={
-            "search": "",
+            "search": search
         }
     )
-    assert response.status_code == 422
+    parse_system_error_detail(
+        response=response,
+        expected_status_code=422,
+        message_error="String should have at least 1 character",
+    )
 
 
 @pytest.mark.get_products
 @pytest.mark.negative
-async def test_get_product_filter_search_on_lower_border(
+async def test_get_product_filter_search_min_value(
         auth_client: AsyncClient,
         products
 ):
@@ -857,7 +877,7 @@ async def test_get_product_filter_search_on_lower_border(
             "search": "g",
         }
     )
-    parsed = parse_product(
+    parsed = parse_response_schema(
         response=response,
         schema=StrictProductListResponse,
         status_code=200
@@ -878,7 +898,7 @@ async def test_get_product_filter_search_on_lower_border(
 
 
 @pytest.mark.get_products
-async def test_get_product_filter_search_on_upper_border(
+async def test_get_product_filter_search_max_value(
         auth_client: AsyncClient,
         products
 ):
@@ -888,7 +908,7 @@ async def test_get_product_filter_search_on_upper_border(
             "search": "s"*100,
         }
     )
-    parsed = parse_product(
+    parsed = parse_response_schema(
         response=response,
         schema=StrictProductListResponse,
         status_code=200
@@ -910,7 +930,7 @@ async def test_get_product_filter_search_on_upper_border(
 
 @pytest.mark.get_products
 @pytest.mark.negative
-async def test_get_product_filter_search_above_upper_border(
+async def test_get_product_filter_search_exceeds_max_value(
         auth_client: AsyncClient,
         products
 ):
@@ -925,17 +945,37 @@ async def test_get_product_filter_search_above_upper_border(
 
 @pytest.mark.get_products
 @pytest.mark.negative
-async def test_get_product_filter_invalid_sort_by(
+@pytest.mark.parametrize(
+    "sort_by", [
+
+        pytest.param(15, id="category_id-float-alue"),
+        pytest.param(1.5, id="category_id-float-value"),
+        pytest.param("test!@#", id="category_id-string-value"),
+        pytest.param("", id="category_id-empty-str-value"),
+        pytest.param("   ", id="category_id-whitespace-only-value"),
+        pytest.param(True, id="category_id-boolean-value"),
+        pytest.param(None, id="category_id-None-value"),
+        pytest.param("null", id="category_id-json-null-value"),
+        pytest.param({}, id="category_id-dict-value"),
+
+    ]
+)
+async def test_get_product_filter_sort_by_invalid_types(
         auth_client: AsyncClient,
-        products
+        products,
+        sort_by: Any,
 ):
     response = await auth_client.get(
         url=f"{base_path}/",
         params={
-            "sort_by": "invalid-sort_by",
+            "sort_by": sort_by
         }
     )
-    assert response.status_code == 422
+    parse_system_error_detail(
+        response=response,
+        expected_status_code=422,
+        message_error="Input should be 'price', 'name' or 'created_at'",
+    )
 
 
 @pytest.mark.get_products
@@ -956,7 +996,7 @@ async def test_get_product_filter_sort_by_same_price(
             "order": order,
         }
     )
-    parsed = parse_product(
+    parsed = parse_response_schema(
         response=response,
         schema=StrictProductListResponse,
         status_code=200
@@ -991,7 +1031,7 @@ async def test_get_product_filter_sort_by_same_name(
             "order": order,
         }
     )
-    parsed = parse_product(
+    parsed = parse_response_schema(
         response=response,
         schema=StrictProductListResponse,
         status_code=200
@@ -1010,17 +1050,37 @@ async def test_get_product_filter_sort_by_same_name(
 
 @pytest.mark.get_products
 @pytest.mark.negative
-async def test_get_product_filter_invalid_order(
+@pytest.mark.parametrize(
+    "order", [
+
+        pytest.param(15, id="category_id-float-alue"),
+        pytest.param(1.5, id="category_id-float-value"),
+        pytest.param("test!@#", id="category_id-string-value"),
+        pytest.param("", id="category_id-empty-str-value"),
+        pytest.param("   ", id="category_id-whitespace-only-value"),
+        pytest.param(True, id="category_id-boolean-value"),
+        pytest.param(None, id="category_id-None-value"),
+        pytest.param("null", id="category_id-json-null-value"),
+        pytest.param({}, id="category_id-dict-value"),
+
+    ]
+)
+async def test_get_product_filter_order_invalid_types(
         auth_client: AsyncClient,
-        products
+        products,
+        order: Any,
 ):
     response = await auth_client.get(
         url=f"{base_path}/",
         params={
-            "order": "invalid-order",
+            "order": order
         }
     )
-    assert response.status_code == 422
+    parse_system_error_detail(
+        response=response,
+        expected_status_code=422,
+        message_error="Input should be 'desc' or 'asc'",
+    )
 
 
 """ Authorization Check """
@@ -1067,7 +1127,7 @@ async def test_get_product_admin_token(
     response = await admin_client.get(
         url=f"{base_path}/",
     )
-    parse_product(
+    parse_response_schema(
         response=response,
         schema=StrictProductListResponse,
         status_code=200

@@ -5,9 +5,73 @@ import pytest
 from httpx import AsyncClient
 
 from shopapi.schemas.product import ProductResponseSchema
-from tests.utils import parse_product, parse_error_detail, parse_system_error_detail, patch_and_parse
+from tests.utils import parse_response_schema, parse_error_detail, parse_system_error_detail, patch_and_parse
 
 base_path = "/api/v1/products"
+
+@pytest.mark.update_product
+async def test_update_product_success_get_response(
+        admin_client: AsyncClient,
+        products
+):
+    product = products[0]
+    payload = {
+        "name": "Test Update Product",
+        "description": "Test Update Product",
+        "category_id": 2,
+        "price": "900.10",
+        "stock": 27,
+    }
+    parsed_post = await patch_and_parse(
+        admin_client=admin_client,
+        product_id=product.id,
+        payload=payload,
+    )
+    response_get = await admin_client.get(
+        url=f"{base_path}/{product.id}",
+    )
+    parsed_get = parse_response_schema(
+        response=response_get,
+        schema=ProductResponseSchema,
+        status_code=200
+    )
+    assert parsed_post.id == parsed_get.id
+    assert parsed_post.category_id == parsed_get.category_id
+    assert parsed_post.name == parsed_get.name
+    assert parsed_post.description == parsed_get.description
+    assert parsed_post.stock == parsed_get.stock
+    assert parsed_post.is_active == parsed_get.is_active
+    assert parsed_post.price == parsed_get.price
+    assert parsed_post.created_at == parsed_get.created_at
+
+
+@pytest.mark.update_product
+async def test_update_product_success_payload(
+        admin_client: AsyncClient,
+        products
+):
+    product = products[0]
+    payload = {
+        "name": "Test Update Product",
+        "description": "Test Update Product",
+        "category_id": 2,
+        "price": "900.10",
+        "stock": 27,
+    }
+    parsed = await patch_and_parse(
+        admin_client=admin_client,
+        product_id=product.id,
+        payload=payload,
+    )
+    assert parsed.id == product.id
+    assert parsed.category_id == payload["category_id"]
+    assert parsed.name == payload["name"]
+    assert parsed.description == payload["description"]
+    assert parsed.price == Decimal(str(payload["price"]))
+    assert parsed.stock == payload["stock"]
+    assert parsed.is_active == product.is_active
+    assert parsed.created_at == product.created_at
+
 
 @pytest.mark.update_product
 async def test_update_product_response_contract(
@@ -68,70 +132,6 @@ async def test_update_product_datetime_is_aware(
 
 
 @pytest.mark.update_product
-async def test_update_product_success_get_response(
-        admin_client: AsyncClient,
-        products
-):
-    product = products[0]
-    payload = {
-        "name": "Test Update Product",
-        "description": "Test Update Product",
-        "category_id": 2,
-        "price": "900.10",
-        "stock": 27,
-    }
-    parsed_post = await patch_and_parse(
-        admin_client=admin_client,
-        product_id=product.id,
-        payload=payload,
-    )
-    response_get = await admin_client.get(
-        url=f"{base_path}/{product.id}",
-    )
-    parsed_get = parse_product(
-        response=response_get,
-        schema=ProductResponseSchema,
-        status_code=200
-    )
-    assert parsed_post.id == parsed_get.id
-    assert parsed_post.category_id == parsed_get.category_id
-    assert parsed_post.name == parsed_get.name
-    assert parsed_post.description == parsed_get.description
-    assert parsed_post.stock == parsed_get.stock
-    assert parsed_post.is_active == parsed_get.is_active
-    assert parsed_post.price == parsed_get.price
-    assert parsed_post.created_at == parsed_get.created_at
-
-
-@pytest.mark.update_product
-async def test_update_product_success_payload(
-        admin_client: AsyncClient,
-        products
-):
-    product = products[0]
-    payload = {
-        "name": "Test Update Product",
-        "description": "Test Update Product",
-        "category_id": 2,
-        "price": "900.10",
-        "stock": 27,
-    }
-    parsed = await patch_and_parse(
-        admin_client=admin_client,
-        product_id=product.id,
-        payload=payload,
-    )
-    assert parsed.id == product.id
-    assert parsed.category_id == payload["category_id"]
-    assert parsed.name == payload["name"]
-    assert parsed.description == payload["description"]
-    assert parsed.price == Decimal(str(payload["price"]))
-    assert parsed.stock == payload["stock"]
-    assert parsed.is_active == product.is_active
-    assert parsed.created_at == product.created_at
-
-
-@pytest.mark.update_product
 @pytest.mark.parametrize(
     "payload_field, payload_value",
     [
@@ -160,26 +160,6 @@ async def test_update_field(
         assert parsed.price == Decimal(str(payload_value))
     else:
         assert getattr(parsed, payload_field) == payload_value
-
-
-@pytest.mark.update_product
-@pytest.mark.negative
-async def test_update_product_invalid_id(
-        admin_client: AsyncClient,
-        product
-):
-    product_id = "invalid-id"
-    response = await admin_client.patch(
-        url=f"{base_path}/{product_id}",
-        json={
-            "name": "Test Update Product",
-        }
-    )
-    parse_system_error_detail(
-        response=response,
-        expected_status_code=422,
-        message_error="Input should be a valid integer, unable to parse string as an integer"
-    )
 
 
 @pytest.mark.update_product
@@ -243,7 +223,7 @@ async def test_patch_products_name_and_desc_non_alphabetic_chars(
         url=f"{base_path}/{product.id}",
         json=payload
     )
-    parsed = parse_product(
+    parsed = parse_response_schema(
         response=response,
         schema=ProductResponseSchema,
         status_code=200,
@@ -367,7 +347,7 @@ async def test_patch_product_name_and_description_whitespace_sides(
         url=f"{base_path}/{product.id}",
         json=payload
     )
-    parsed = parse_product(
+    parsed = parse_response_schema(
         response=response,
         schema=ProductResponseSchema,
         status_code=200
@@ -396,7 +376,7 @@ async def test_patch_product_name_max_length(
         url=f"{base_path}/{product.id}",
         json=payload
     )
-    parsed = parse_product(
+    parsed = parse_response_schema(
         response=response,
         schema=ProductResponseSchema,
         status_code=200
@@ -426,7 +406,7 @@ async def test_patch_product_name_exceeds_max_length(
 
 @pytest.mark.update_product
 @pytest.mark.parametrize(
-    "name_values", [
+    "name_value", [
         "n",
         "na"
     ]
@@ -434,21 +414,21 @@ async def test_patch_product_name_exceeds_max_length(
 async def test_patch_product_name_min_length(
         admin_client: AsyncClient,
         product,
-        name_values
+        name_value
 ):
     payload = {
-        "name": name_values,
+        "name": name_value,
     }
     response = await admin_client.patch(
         url=f"{base_path}/{product.id}",
         json=payload
     )
-    parsed = parse_product(
+    parsed = parse_response_schema(
         response=response,
         schema=ProductResponseSchema,
         status_code=200
     )
-    assert parsed.name == name_values
+    assert parsed.name == name_value
 
 
 @pytest.mark.update_product
@@ -485,7 +465,7 @@ async def test_patch_product_name_whitespace_sides(
         url=f"{base_path}/{product.id}",
         json=payload
     )
-    parsed = parse_product(
+    parsed = parse_response_schema(
         response=response,
         schema=ProductResponseSchema,
         status_code=200
@@ -517,7 +497,7 @@ async def test_patch_product_name_whitespace_only(
 # length
 @pytest.mark.update_product
 @pytest.mark.parametrize(
-    "description_values", [
+    "description_value", [
         "d" * 2999,
         "d" * 3000
     ]
@@ -525,21 +505,21 @@ async def test_patch_product_name_whitespace_only(
 async def test_patch_product_description_max_length(
         admin_client: AsyncClient,
         product,
-        description_values
+        description_value
 ):
     payload = {
-        "description": description_values,
+        "description": description_value,
     }
     response = await admin_client.patch(
         url=f"{base_path}/{product.id}",
         json=payload
     )
-    parsed = parse_product(
+    parsed = parse_response_schema(
         response=response,
         schema=ProductResponseSchema,
         status_code=200
     )
-    assert parsed.description == description_values
+    assert parsed.description == description_value
 
 
 @pytest.mark.update_product
@@ -574,7 +554,7 @@ async def test_patch_product_description_min_length(
         url=f"{base_path}/{product.id}",
         json=payload
     )
-    parsed = parse_product(
+    parsed = parse_response_schema(
         response=response,
         schema=ProductResponseSchema,
         status_code=200
@@ -585,7 +565,7 @@ async def test_patch_product_description_min_length(
 @pytest.mark.update_product
 @pytest.mark.negative
 @pytest.mark.parametrize(
-    "description_values", [
+    "description_value", [
         "",
         "   ",
         None
@@ -594,16 +574,16 @@ async def test_patch_product_description_min_length(
 async def test_patch_product_description_none(
         admin_client: AsyncClient,
         product,
-        description_values
+        description_value
 ):
     payload = {
-        "description": description_values,
+        "description": description_value,
     }
     response = await admin_client.patch(
         url=f"{base_path}/{product.id}",
         json=payload
     )
-    parsed = parse_product(
+    parsed = parse_response_schema(
         response=response,
         schema=ProductResponseSchema,
         status_code=200
@@ -626,7 +606,7 @@ async def test_patch_product_category_id_success(
         url=f"{base_path}/{products[0].id}",
         json=payload
     )
-    parsed = parse_product(
+    parsed = parse_response_schema(
         response=response,
         schema=ProductResponseSchema,
         status_code=200
@@ -637,7 +617,7 @@ async def test_patch_product_category_id_success(
 @pytest.mark.update_product
 @pytest.mark.negative
 @pytest.mark.parametrize(
-    "field_value", [
+    "category_id", [
         1.5,
         "1",
         "test!@#",
@@ -651,10 +631,10 @@ async def test_patch_product_category_id_success(
 async def test_patch_product_category_id_invalid_types(
         admin_client: AsyncClient,
         product,
-        field_value,
+        category_id,
 ):
     payload = {
-        "category_id": field_value
+        "category_id": category_id
     }
     response = await admin_client.patch(
         url=f"{base_path}/{product.id}",
@@ -689,7 +669,7 @@ async def test_patch_product_category_id_incorrect_value(
 @pytest.mark.update_product
 @pytest.mark.negative
 @pytest.mark.parametrize(
-    "field_value", [
+    "category_id", [
         0,
         -1
     ]
@@ -697,10 +677,10 @@ async def test_patch_product_category_id_incorrect_value(
 async def test_patch_product_category_id_under_min_value(
         admin_client: AsyncClient,
         product,
-        field_value: int
+        category_id: int
 ):
     payload = {
-        "category_id": field_value
+        "category_id": category_id
     }
     response = await admin_client.patch(
         url=f"{base_path}/{product.id}",
@@ -716,7 +696,7 @@ async def test_patch_product_category_id_under_min_value(
 """ Check Field price """
 @pytest.mark.update_product
 @pytest.mark.parametrize(
-    "field_value", [
+    "price", [
         "1200.37",
         1200.37,
         "1200",
@@ -727,16 +707,16 @@ async def test_patch_product_category_id_under_min_value(
 async def test_patch_product_price_success(
         admin_client: AsyncClient,
         product,
-        field_value
+        price
 ):
     payload = {
-        "price": field_value
+        "price": price
     }
     response = await admin_client.patch(
         url=f"{base_path}/{product.id}",
         json=payload
     )
-    parsed = parse_product(
+    parsed = parse_response_schema(
         response=response,
         schema=ProductResponseSchema,
         status_code=200
@@ -747,7 +727,7 @@ async def test_patch_product_price_success(
 @pytest.mark.update_product
 @pytest.mark.negative
 @pytest.mark.parametrize(
-    "field_value", [
+    "price", [
         0,
         -1
     ]
@@ -755,10 +735,10 @@ async def test_patch_product_price_success(
 async def test_patch_product_price_under_min_value(
         admin_client: AsyncClient,
         product,
-        field_value: int
+        price: int
 ):
     payload = {
-        "price": field_value
+        "price": price
     }
     response = await admin_client.patch(
         url=f"{base_path}/{product.id}",
@@ -840,7 +820,7 @@ async def test_patch_product_stock_success(
         url=f"{base_path}/{product.id}",
         json=payload
     )
-    parsed = parse_product(
+    parsed = parse_response_schema(
         response=response,
         schema=ProductResponseSchema,
         status_code=200
@@ -851,7 +831,7 @@ async def test_patch_product_stock_success(
 @pytest.mark.update_product
 @pytest.mark.negative
 @pytest.mark.parametrize(
-    "field_value", [
+    "stock", [
         "invalid-price",
         "!@#$",
         "  ",
@@ -861,16 +841,15 @@ async def test_patch_product_stock_success(
         [],
         {},
         True,
-
     ]
 )
 async def test_patch_product_stock_invalid_types(
         admin_client: AsyncClient,
         product,
-        field_value
+        stock
 ):
     payload = {
-        "stock": field_value
+        "stock": stock
     }
     response = await admin_client.patch(
         url=f"{base_path}/{product.id}",
@@ -885,7 +864,7 @@ async def test_patch_product_stock_invalid_types(
 
 @pytest.mark.update_product
 @pytest.mark.parametrize(
-    "field_value", [
+    "stock", [
         0,
         1
     ]
@@ -893,16 +872,16 @@ async def test_patch_product_stock_invalid_types(
 async def test_patch_product_stock_min_value(
         admin_client: AsyncClient,
         product,
-        field_value: int
+        stock: int
 ):
     payload = {
-        "stock": field_value
+        "stock": stock
     }
     response = await admin_client.patch(
         url=f"{base_path}/{product.id}",
         json=payload
     )
-    parsed = parse_product(
+    parsed = parse_response_schema(
         response=response,
         schema=ProductResponseSchema,
         status_code=200
@@ -949,7 +928,7 @@ async def test_update_product_invalid_types_product_id(
         product_id
 ):
     response = await admin_client.patch(
-        url=f"{base_path}/{product}",
+        url=f"{base_path}/{product_id}",
         json={
             "name": "Test Update Product",
         }
