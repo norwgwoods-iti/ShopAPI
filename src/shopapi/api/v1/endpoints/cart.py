@@ -16,6 +16,7 @@ router = APIRouter(
     tags=["Cart"],
 )
 
+
 @router.post(
     path="/items",
     response_model=CartListResponseSchema,
@@ -99,6 +100,7 @@ async def add_to_cart(
     ).all()
 
     return get_cart_list_response(rows=rows)
+
 
 @router.get(
     path="/",

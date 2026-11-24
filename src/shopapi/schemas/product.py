@@ -9,7 +9,7 @@ ProductName = Annotated[
     str, StringConstraints(strip_whitespace=True, min_length=1, max_length=200)
 ]
 ProductDescription = Annotated[
-    str, StringConstraints(strip_whitespace=True,max_length=3000)
+    str, StringConstraints(strip_whitespace=True, max_length=3000)
 ]
 ProductCategoryId = Annotated[
     int, Field(gt=0, strict=True),
