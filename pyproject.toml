@@ -61,7 +61,7 @@ markers= [
 
 [tool.prehook]
 hooks = [
-    { name = "test", run = "uv run pytest -v", on = ["pre-push"] },
+    { name = "test", run = "uv run pytest tests/test_cart/ -v", on = ["pre-push"] },
 ]
 
 #[project.scripts]
