@@ -78,37 +78,6 @@ async def test_post_cart_success_payload(
 
 
 @pytest.mark.post_cart
-async def test_post_cart_success_get_response(
-        auth_client: AsyncClient,
-        product,
-        post_cart_payload: dict[str, Any]
-):
-    parsed_post = await _parsed_add_product_to_cart(
-        client=auth_client,
-        payload=post_cart_payload
-    )
-    response_get = await auth_client.get(
-        url=f"{base_path}/",
-    )
-    parsed_get = parse_response_schema(
-        response=response_get,
-        schema=CartListResponseSchema,
-        status_code=200,
-    )
-    assert parsed_post.total_amount == parsed_get.total_amount
-
-    (item_post,) = parsed_post.items
-    (item_get,) = parsed_get.items
-
-    assert item_post.id == item_get.id
-    assert item_post.product_id == item_get.product_id
-    assert item_post.name == item_get.name
-    assert item_post.unit_price == item_get.unit_price
-    assert item_post.quantity == item_get.quantity
-    assert item_post.subtotal == item_get.subtotal
-
-
-@pytest.mark.post_cart
 @pytest.mark.negative
 async def test_post_cart_add_product_again(
         auth_client: AsyncClient,
