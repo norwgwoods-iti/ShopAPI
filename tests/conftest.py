@@ -262,48 +262,49 @@ async def post_product_payload(category):
     }
 
 
-# @pytest_asyncio.fixture()
-# async def post_cart_one_product(
-#         auth_client: AsyncClient,
-#         product,
-#         db_session
-# ) -> None:
-#     user = (
-#         await db_session.execute(
-#             select(UserModel)
-#         )
-#     ).scalar_one_or_none()
-#
-#     new_cart = CartModel(
-#         user_id=user.id,
-#         product_id=product.id,
-#         quantity=5,
-#     )
-#     db_session.add(new_cart)
-#     await db_session.commit()
+@pytest_asyncio.fixture()
+async def post_cart_one_product(
+        auth_client: AsyncClient,
+        product,
+        db_session,
+        post_cart_payload
+) -> None:
+    user = (
+        await db_session.execute(
+            select(UserModel)
+        )
+    ).scalar_one_or_none()
+
+    new_cart = CartModel(
+        user_id=user.id,
+        product_id=product.id,
+        quantity=post_cart_payload["quantity"],
+    )
+    db_session.add(new_cart)
+    await db_session.commit()
 
 
-# @pytest_asyncio.fixture()
-# async def post_cart_many_products(
-#         auth_client: AsyncClient,
-#         products,
-#         post_cart_payload,
-#         db_session
-# ):
-#     user = (
-#         await db_session.execute(
-#             select(UserModel)
-#         )
-#     ).scalar_one_or_none()
-#     cart = [
-#         CartModel(
-#             user_id=user.id,
-#             product_id=product.id,
-#             quantity=post_cart_payload["quantity"],
-#         ) for product in products
-#     ]
-#     db_session.add_all(cart)
-#     await db_session.commit()
+@pytest_asyncio.fixture()
+async def post_cart_many_products(
+        auth_client: AsyncClient,
+        products,
+        post_cart_payload,
+        db_session
+):
+    user = (
+        await db_session.execute(
+            select(UserModel)
+        )
+    ).scalar_one_or_none()
+    cart = [
+        CartModel(
+            user_id=user.id,
+            product_id=product.id,
+            quantity=post_cart_payload["quantity"],
+        ) for product in products
+    ]
+    db_session.add_all(cart)
+    await db_session.commit()
 
 
 @pytest_asyncio.fixture()
