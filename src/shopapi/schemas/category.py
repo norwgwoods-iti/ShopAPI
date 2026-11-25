@@ -8,7 +8,7 @@ class CategoryResponseSchema(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
-class ProductListResponseSchema(BaseModel):
+class CategoryListResponseSchema(BaseModel):
     total: int
     page:int
     page_size: int

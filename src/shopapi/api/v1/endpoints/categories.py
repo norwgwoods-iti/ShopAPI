@@ -8,7 +8,7 @@ from starlette import status
 from shopapi.core.dependencies import CurrentUserDep, CurrentAdminDep
 from shopapi.core.dependencies import SessionDep
 from shopapi.models.category import CategoryModel
-from shopapi.schemas.category import CategoryResponseSchema, ProductListResponseSchema, CategoryCreateSchema, \
+from shopapi.schemas.category import CategoryResponseSchema, CategoryListResponseSchema, CategoryCreateSchema, \
     CategoryUpdateSchema
 
 router = APIRouter(
@@ -19,7 +19,7 @@ router = APIRouter(
 
 @router.get(
     path="/",
-    response_model=ProductListResponseSchema,
+    response_model=CategoryListResponseSchema,
     status_code=status.HTTP_200_OK,
 )
 async def get_categories(
@@ -64,7 +64,7 @@ async def get_categories(
     result = await session.scalars(query)
     items = result.all()
 
-    return ProductListResponseSchema(
+    return CategoryListResponseSchema(
         total=total or 0,
         page=page,
         page_size=page_size,
